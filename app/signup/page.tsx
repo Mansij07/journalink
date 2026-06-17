@@ -1,8 +1,8 @@
 import AnimatedBackground from "@/components/ui/AnimatedBackground"
 import { GalleryVerticalEndIcon } from "lucide-react"
-import { LoginForm } from "@/components/login-form"
+import { SignupForm } from "@/components/signup-form"
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="relative flex min-h-svh items-center justify-center">
       <AnimatedBackground />
@@ -13,7 +13,7 @@ export default function LoginPage() {
           </div>
           JournaLink
         </a>
-        <LoginForm />
+        <SignupForm />
       </div>
     </div>
   )
