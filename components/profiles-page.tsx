@@ -6,8 +6,14 @@ import { createClient } from "@/lib/supabase/client"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 
 type Profile = { id: string; username: string; role: string }
-type Project = { id: number; title: string; type: string; status: string }
-
+type Project = {
+    id: number
+    title: string
+    type: string
+    status: string
+    professor_id: string
+    profiles: { username: string }[] | { username: string } | null
+}
 export function ProfileClient() {
     const [search, setSearch] = useState("")
     const [profiles, setProfiles] = useState<Profile[]>([])
@@ -37,10 +43,12 @@ export function ProfileClient() {
                 return
             }
 
-            const [{ data: profileData }, { data: projectData }] = await Promise.all([
+            const [{ data: profileData }, { data: projectData, error: projectError }] = await Promise.all([
                 supabase.from("profiles").select("id, username, role").ilike("username", `%${search}%`).limit(5),
-                supabase.from("project").select("id, title, type, status").ilike("title", `%${search}%`).limit(5),
-            ])
+                supabase.from("project").select("id, title, type, status, professor_id, profiles!professor_id(username)").ilike("title", `%${search}%`).limit(5)])
+
+            console.log("Project Data:", projectData)
+            console.log("Project Error:", projectError)
 
             if (profileData) setProfiles(profileData)
             if (projectData) setProjects(projectData)
@@ -99,9 +107,14 @@ export function ProfileClient() {
                                     {projects.map((project) => (
                                         <div
                                             key={project.id}
-                                            className="flex items-center justify-between px-3 py-2 hover:bg-zinc-800 cursor-pointer"
+                                            className="flex items-center justify-between px-3 py-2 hover:bg-white/5 cursor-pointer"
                                         >
-                                            <span className="text-white text-sm">{project.title}</span>
+                                            <div>
+                                                <span className="text-white text-sm">{project.title}</span>
+                                                <span className="text-white/60 text-xs ml-2">
+                                                     {Array.isArray(project.profiles) ? project.profiles[0]?.username : project.profiles?.username}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center gap-1">
                                                 <span className="text-white/60 text-xs">{project.type} · </span>
                                                 <span className={project.status === "Open" ? "text-green-400 text-xs" : "text-red-400 text-xs"}>

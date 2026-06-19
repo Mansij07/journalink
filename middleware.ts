@@ -61,7 +61,7 @@ export const config = {
   matcher: [
     '/feed/:path*',
     '/projects/:path*',
-    '/profile/:path*',
+    '/profiles/:path*',
     '/notifications/:path*',
     '/applications/:path*',
     '/posts/:path*',
