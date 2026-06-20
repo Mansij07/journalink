@@ -1,0 +1,75 @@
+{
+  "communities": {
+    "0": [
+      "layout",
+      "layout_inter",
+      "layout_metadata",
+      "layout_rootlayout"
+    ],
+    "1": [
+      "applications_page",
+      "applications_page_feedpage"
+    ],
+    "2": [
+      "callback_route",
+      "callback_route_get"
+    ],
+    "3": [
+      "feed_page",
+      "feed_page_feedpage"
+    ],
+    "4": [
+      "login_page",
+      "login_page_loginpage"
+    ],
+    "5": [
+      "onboarding_page",
+      "onboarding_page_onboardingpage"
+    ],
+    "6": [
+      "page",
+      "page_home"
+    ],
+    "7": [
+      "profiles_page",
+      "profiles_page_profilepage"
+    ],
+    "8": [
+      "projects_page",
+      "projects_page_feedpage"
+    ],
+    "9": [
+      "signup_page",
+      "signup_page_signuppage"
+    ]
+  },
+  "cohesion": {
+    "0": 0.5,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0
+  },
+  "gods": [
+    {
+      "id": "layout_inter",
+      "label": "inter",
+      "degree": 1
+    },
+    {
+      "id": "layout_metadata",
+      "label": "metadata",
+      "degree": 1
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

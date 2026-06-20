@@ -1,0 +1,27 @@
+{
+  "communities": {
+    "0": [
+      "supabase_client",
+      "supabase_client_createclient"
+    ],
+    "1": [
+      "supabase_server",
+      "supabase_server_createclient"
+    ],
+    "2": [
+      "utils",
+      "utils_cn"
+    ]
+  },
+  "cohesion": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 1.0
+  },
+  "gods": [],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "client.ts",
+      "file_type": "code",
+      "source_file": "supabase/client.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "supabase_client",
+      "community": 0,
+      "norm_label": "client.ts"
+    },
+    {
+      "label": "createClient()",
+      "file_type": "code",
+      "source_file": "supabase/client.ts",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "supabase_client_createclient",
+      "community": 0,
+      "norm_label": "createclient()"
+    },
+    {
+      "label": "server.ts",
+      "file_type": "code",
+      "source_file": "supabase/server.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "supabase_server",
+      "community": 1,
+      "norm_label": "server.ts"
+    },
+    {
+      "label": "createClient()",
+      "file_type": "code",
+      "source_file": "supabase/server.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "supabase_server_createclient",
+      "community": 1,
+      "norm_label": "createclient()"
+    },
+    {
+      "label": "utils.ts",
+      "file_type": "code",
+      "source_file": "utils.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "utils",
+      "community": 2,
+      "norm_label": "utils.ts"
+    },
+    {
+      "label": "cn()",
+      "file_type": "code",
+      "source_file": "utils.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "utils_cn",
+      "community": 2,
+      "norm_label": "cn()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/client.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "supabase_client",
+      "target": "supabase_client_createclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/server.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "supabase_server",
+      "target": "supabase_server_createclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "utils",
+      "target": "utils_cn",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "c2b72d3d658c1ed71cc133fc1adeb8c63d2ec21f"
+}

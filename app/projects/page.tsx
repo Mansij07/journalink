@@ -1,5 +1,3 @@
-import { FeedClient } from "@/components/feed-page"
-
-export default function feedPage() {
-  return <FeedClient />
+export default function ProjectsPage() {
+  return <div className="min-h-screen bg-[#000000]" />
 }

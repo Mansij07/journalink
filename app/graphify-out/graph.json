@@ -1,0 +1,351 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "applications/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "applications_page",
+      "community": 1,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "feedPage()",
+      "file_type": "code",
+      "source_file": "applications/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "applications_page_feedpage",
+      "community": 1,
+      "norm_label": "feedpage()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "auth/callback/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "callback_route",
+      "community": 2,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "auth/callback/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "callback_route_get",
+      "community": 2,
+      "norm_label": "get()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "feed/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "feed_page",
+      "community": 3,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "feedPage()",
+      "file_type": "code",
+      "source_file": "feed/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "feed_page_feedpage",
+      "community": 3,
+      "norm_label": "feedpage()"
+    },
+    {
+      "label": "layout.tsx",
+      "file_type": "code",
+      "source_file": "layout.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "layout",
+      "community": 0,
+      "norm_label": "layout.tsx"
+    },
+    {
+      "label": "inter",
+      "file_type": "code",
+      "source_file": "layout.tsx",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "layout_inter",
+      "community": 0,
+      "norm_label": "inter"
+    },
+    {
+      "label": "metadata",
+      "file_type": "code",
+      "source_file": "layout.tsx",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "layout_metadata",
+      "community": 0,
+      "norm_label": "metadata"
+    },
+    {
+      "label": "RootLayout()",
+      "file_type": "code",
+      "source_file": "layout.tsx",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "layout_rootlayout",
+      "community": 0,
+      "norm_label": "rootlayout()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "login/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "login_page",
+      "community": 4,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "LoginPage()",
+      "file_type": "code",
+      "source_file": "login/page.tsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "login_page_loginpage",
+      "community": 4,
+      "norm_label": "loginpage()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "onboarding/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "onboarding_page",
+      "community": 5,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "OnboardingPage()",
+      "file_type": "code",
+      "source_file": "onboarding/page.tsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "onboarding_page_onboardingpage",
+      "community": 5,
+      "norm_label": "onboardingpage()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "page",
+      "community": 6,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "Home()",
+      "file_type": "code",
+      "source_file": "page.tsx",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "page_home",
+      "community": 6,
+      "norm_label": "home()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "profiles/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "profiles_page",
+      "community": 7,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "profilePage()",
+      "file_type": "code",
+      "source_file": "profiles/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "profiles_page_profilepage",
+      "community": 7,
+      "norm_label": "profilepage()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "projects/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "projects_page",
+      "community": 8,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "feedPage()",
+      "file_type": "code",
+      "source_file": "projects/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "projects_page_feedpage",
+      "community": 8,
+      "norm_label": "feedpage()"
+    },
+    {
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "signup/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "signup_page",
+      "community": 9,
+      "norm_label": "page.tsx"
+    },
+    {
+      "label": "SignupPage()",
+      "file_type": "code",
+      "source_file": "signup/page.tsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "signup_page_signuppage",
+      "community": 9,
+      "norm_label": "signuppage()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "applications/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "applications_page",
+      "target": "applications_page_feedpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "auth/callback/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "callback_route",
+      "target": "callback_route_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "feed/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "feed_page",
+      "target": "feed_page_feedpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "layout.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "layout",
+      "target": "layout_inter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "layout.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "layout",
+      "target": "layout_metadata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "layout.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "layout",
+      "target": "layout_rootlayout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "login/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "login_page",
+      "target": "login_page_loginpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "onboarding_page",
+      "target": "onboarding_page_onboardingpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "page",
+      "target": "page_home",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "profiles/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "profiles_page",
+      "target": "profiles_page_profilepage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "projects/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "projects_page",
+      "target": "projects_page_feedpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "signup/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "signup_page",
+      "target": "signup_page_signuppage",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "c2b72d3d658c1ed71cc133fc1adeb8c63d2ec21f"
+}

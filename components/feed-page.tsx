@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { FeedLayout } from "@/components/feed/FeedLayout"
 
-export function FeedClient(){
-    return(
-        <div className="min-h-screen bg-[#000000]">
-            
-        </div>
-    )
+interface FeedClientProps {
+  role: string
+  userId: string
+}
+
+export function FeedClient(props: FeedClientProps) {
+  return <FeedLayout role={props.role} userId={props.userId} />
 }
