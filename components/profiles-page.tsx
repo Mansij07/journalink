@@ -47,9 +47,6 @@ export function ProfileClient() {
                 supabase.from("profiles").select("id, username, role").ilike("username", `%${search}%`).limit(5),
                 supabase.from("project").select("id, title, type, status, professor_id, profiles!professor_id(username)").ilike("title", `%${search}%`).limit(5)])
 
-            console.log("Project Data:", projectData)
-            console.log("Project Error:", projectError)
-
             if (profileData) setProfiles(profileData)
             if (projectData) setProjects(projectData)
             setOpen(true)

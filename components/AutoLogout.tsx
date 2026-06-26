@@ -1,12 +1,14 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export function AutoLogout() {
   const router = useRouter()
   const supabase = createClient()
+  const routerRef = useRef(router)
+  const supabaseRef = useRef(supabase)
 
   useEffect(() => {
     let timer: NodeJS.Timeout
@@ -14,8 +16,8 @@ export function AutoLogout() {
     const resetTimer = () => {
       clearTimeout(timer)
       timer = setTimeout(async () => {
-        await supabase.auth.signOut()
-        router.push("/login")
+        await supabaseRef.current.auth.signOut()
+        routerRef.current.push("/login")
       }, 10 * 60 * 1000) // 10 minutes
     }
 

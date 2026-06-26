@@ -1,12 +1,13 @@
 import { FeedClient } from "@/components/feed-page"
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function feedPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return null
+    redirect("/login")
   }
 
   const { data: profile } = await supabase

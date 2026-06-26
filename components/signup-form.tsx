@@ -17,19 +17,22 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
   const [username, setUsername] = useState("")
   const [role, setRole] = useState<"Student" | "Prof">("Student")
   const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSignup = async () => {
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
     setError("")
+    setMessage("")
 
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          display_name: username,  
+          display_name: username,
           full_name: username,
         }
       }
@@ -37,6 +40,13 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 
     if (signupError) {
       setError(signupError.message)
+      setLoading(false)
+      return
+    }
+
+    if (!data.session) {
+      // Email confirmation required — session not yet established
+      setMessage("Check your email to confirm your account before logging in.")
       setLoading(false)
       return
     }
@@ -66,7 +76,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
           <CardDescription>Enter your details to get started</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4">
+          <form onSubmit={handleSignup} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -123,7 +133,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
               </div>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button onClick={handleSignup} disabled={loading}>
+            {message && <p className="text-sm text-green-500">{message}</p>}
+            <Button type="submit" disabled={loading}>
               {loading ? "Creating account..." : "Sign up"}
             </Button>
             <p className="text-center text-sm">
@@ -132,7 +143,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
                 Login
               </a>
             </p>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
