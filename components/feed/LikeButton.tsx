@@ -14,26 +14,39 @@ export function LikeButton({ initialCount = 0 }: LikeButtonProps) {
   const [count, setCount] = useState(initialCount)
 
   const toggleLike = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent clicking the post card
-    if (liked) {
-      setCount(prev => prev - 1)
-    } else {
-      setCount(prev => prev + 1)
-    }
+    e.stopPropagation()
+    setCount((prev) => liked ? prev - 1 : prev + 1)
     setLiked(!liked)
   }
 
   return (
     <motion.button
-      whileTap={{ scale: 1.3 }}
+      whileTap={{ scale: 0.85 }}
       onClick={toggleLike}
       className={cn(
-        "flex items-center gap-1.5 text-sm transition-colors cursor-pointer",
-        liked ? "text-red-500" : "text-white/40 hover:text-red-400"
+        "group flex items-center gap-1 cursor-pointer transition-colors",
+        liked ? "text-[#F91880]" : "text-[#71767B]"
       )}
+      aria-label={liked ? "Unlike" : "Like"}
     >
-      <Heart className={cn("size-4", liked && "fill-red-500")} />
-      {count > 0 && <span>{count}</span>}
+      <div className="p-2 rounded-full group-hover:bg-[#F91880]/10 transition-colors">
+        <Heart
+          className={cn(
+            "size-[18px] transition-colors group-hover:text-[#F91880]",
+            liked && "fill-[#F91880] text-[#F91880]"
+          )}
+        />
+      </div>
+      {count > 0 && (
+        <span
+          className={cn(
+            "text-[13px] transition-colors group-hover:text-[#F91880]",
+            liked && "text-[#F91880]"
+          )}
+        >
+          {count}
+        </span>
+      )}
     </motion.button>
   )
 }

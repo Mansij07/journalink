@@ -2,11 +2,42 @@
 
 import { FeedLayout } from "@/components/feed/FeedLayout"
 
-interface FeedClientProps {
+interface Suggestion {
+  id: string
+  username: string
+  full_name: string | null
   role: string
-  userId: string
+  avatar_url: string | null
 }
 
-export function FeedClient(props: FeedClientProps) {
-  return <FeedLayout role={props.role} userId={props.userId} />
+interface FeedClientProps {
+  profile: any
+  userId: string
+  followersCount: number
+  followingCount: number
+  projectsCount: number
+  suggestions: Suggestion[]
+  followsYouIds: string[]
+}
+
+export function FeedClient({
+  profile,
+  userId,
+  followersCount,
+  followingCount,
+  projectsCount,
+  suggestions,
+  followsYouIds,
+}: FeedClientProps) {
+  return (
+    <FeedLayout
+      profile={profile}
+      userId={userId}
+      followersCount={followersCount}
+      followingCount={followingCount}
+      projectsCount={projectsCount}
+      suggestions={suggestions}
+      followsYouIds={followsYouIds}
+    />
+  )
 }
