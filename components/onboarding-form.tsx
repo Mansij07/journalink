@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export default function OnboardingForm() {
   const [username, setUsername] = useState("")
@@ -20,8 +21,13 @@ export default function OnboardingForm() {
     setLoading(true)
     setError("")
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push("/login"); return }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      router.push("/login")
+      return
+    }
 
     const { error } = await supabase
       .from("profiles")
@@ -43,34 +49,41 @@ export default function OnboardingForm() {
         <CardDescription>Tell us a bit about yourself</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="username">Username</Label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="username">Username</FieldLabel>
             <Input
               id="username"
               placeholder="mansij07"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>I am a...</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" value="Student" checked={role === "Student"} onChange={() => setRole("Student")} />
+          </Field>
+          <Field>
+            <FieldLabel>I am a...</FieldLabel>
+            <ToggleGroup
+              type="single"
+              value={role}
+              onValueChange={(v) => v && setRole(v as "Student" | "Prof")}
+              spacing={0}
+              className="w-full"
+              variant="outline"
+            >
+              <ToggleGroupItem value="Student" className="flex-1">
                 Student
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" value="Prof" checked={role === "Prof"} onChange={() => setRole("Prof")} />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="Prof" className="flex-1">
                 Professor
-              </label>
-            </div>
-          </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button onClick={handleSubmit} disabled={loading || !username}>
-            {loading ? "Saving..." : "Get started"}
-          </Button>
-        </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Field>
+            <Button onClick={handleSubmit} disabled={loading || !username}>
+              {loading ? "Saving..." : "Get started"}
+            </Button>
+          </Field>
+        </FieldGroup>
       </CardContent>
     </Card>
   )

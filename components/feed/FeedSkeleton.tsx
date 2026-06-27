@@ -1,31 +1,29 @@
+import { Skeleton } from "@/components/ui/skeleton"
+
 export function FeedSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="mb-4 rounded-2xl border border-[#2F3336] bg-[#16181C] p-5 animate-pulse flex gap-3"
+          className="rounded-2xl border border-border bg-card p-5 flex gap-3"
         >
-          {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-[#2F3336] shrink-0 mt-0.5" />
+          <Skeleton className="size-10 rounded-full shrink-0 mt-0.5" />
 
-          <div className="flex-1 space-y-3 pt-1">
-            {/* Author row */}
+          <div className="flex-1 flex flex-col gap-3 pt-1">
             <div className="flex items-center gap-2">
-              <div className="h-3 bg-[#2F3336] rounded-full w-28" />
-              <div className="h-3 bg-[#2F3336] rounded-full w-20" />
-              <div className="h-3 bg-[#2F3336] rounded-full w-10" />
+              <Skeleton className="h-3 w-28 rounded-full" />
+              <Skeleton className="h-3 w-20 rounded-full" />
+              <Skeleton className="h-3 w-10 rounded-full" />
             </div>
 
-            {/* Content lines */}
-            <div className="h-3.5 bg-[#2F3336] rounded-full w-full" />
-            <div className="h-3.5 bg-[#2F3336] rounded-full w-[88%]" />
-            <div className="h-3.5 bg-[#2F3336] rounded-full w-[70%]" />
+            <Skeleton className="h-3.5 w-full rounded-full" />
+            <Skeleton className="h-3.5 w-[88%] rounded-full" />
+            <Skeleton className="h-3.5 w-[70%] rounded-full" />
 
-            {/* Engagement row */}
             <div className="flex items-center justify-between max-w-[360px] pt-1">
               {[...Array(5)].map((_, j) => (
-                <div key={j} className="w-8 h-8 rounded-full bg-[#2F3336]" />
+                <Skeleton key={j} className="size-8 rounded-full" />
               ))}
             </div>
           </div>

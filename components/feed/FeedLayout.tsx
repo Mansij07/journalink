@@ -63,13 +63,9 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
 
         if (error || !postRows) throw error
 
-        // Fetch profiles for the batch's authors separately (no FK needed)
         const authorIds = [...new Set(postRows.map((p) => p.author_id))]
         const { data: profileRows } = authorIds.length
-          ? await supabase
-              .from("profiles")
-              .select("*")
-              .in("id", authorIds)
+          ? await supabase.from("profiles").select("*").in("id", authorIds)
           : { data: [] }
 
         const profileMap = new Map((profileRows ?? []).map((p) => [p.id, p]))
@@ -105,14 +101,10 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
   }
 
   return (
-    <div className="min-h-screen flex-1 bg-black text-white">
-      <div
-        className="mx-auto px-5 pt-6 pb-10"
-        style={{ maxWidth: "1600px" }}
-      >
+    <div className="min-h-screen flex-1 bg-background text-foreground">
+      <div className="mx-auto px-5 pt-6 pb-10" style={{ maxWidth: "1600px" }}>
         <div className="flex items-start gap-6">
 
-          {/* ── Left sidebar — 260 px ── */}
           <aside
             className="hidden xl:block shrink-0 sticky top-6 overflow-y-auto"
             style={{ width: "260px", maxHeight: "calc(100vh - 1.5rem)" }}
@@ -125,7 +117,6 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
             />
           </aside>
 
-          {/* ── Center feed ── */}
           <main className="flex-1 min-w-0">
             {selectedPostId ? (
               <PostFullView
@@ -136,7 +127,6 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
               />
             ) : (
               <div className="flex flex-col pb-28">
-
                 {role === "Prof" && (
                   <PostComposer
                     userId={userId}
@@ -151,23 +141,21 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
                     <FeedSkeleton count={5} />
                   ) : posts.length === 0 ? (
                     <div className="flex items-center justify-center py-20 text-center">
-                      <p className="text-[#71767B] text-[15px]">No posts yet. Check back soon.</p>
+                      <p className="text-muted-foreground text-[15px]">No posts yet. Check back soon.</p>
                     </div>
                   ) : (
                     <InfiniteScroll onLoadMore={handleLoadMore} hasMore={hasMore} loading={loadingMore}>
                       {posts.map((post) => (
-                        <PostCard key={post.id} post={post} onPostClick={setSelectedPostId} />
+                        <PostCard key={post.id} post={post} userId={userId} onPostClick={setSelectedPostId} />
                       ))}
                       {loadingMore && <FeedSkeleton count={2} />}
                     </InfiniteScroll>
                   )}
                 </div>
-
               </div>
             )}
           </main>
 
-          {/* ── Right sidebar — 260 px, recommended users ── */}
           <aside
             className="hidden xl:block shrink-0 sticky top-6 overflow-y-auto"
             style={{ width: "260px", maxHeight: "calc(100vh - 1.5rem)" }}

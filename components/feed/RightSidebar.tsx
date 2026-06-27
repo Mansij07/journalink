@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { BadgeCheck } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface Suggestion {
@@ -35,9 +38,9 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
 
   return (
     <div className="w-full flex flex-col gap-4 pb-8">
-      <div className="w-full rounded-2xl border border-[#2F3336] bg-[#16181C] p-5">
-        <h2 className="font-bold text-[17px] text-white mb-4">Who to Follow</h2>
-        <div className="space-y-4">
+      <div className="w-full rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-bold text-[17px] text-foreground mb-4">Who to Follow</h2>
+        <div className="flex flex-col gap-4">
           {suggestions.map((user) => {
             const isFollowed = followed.has(user.id)
             const followsYou = followsYouSet.has(user.id)
@@ -46,50 +49,50 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
 
             return (
               <div key={user.id} className="flex items-center justify-between gap-3">
-                {/* Avatar + name */}
                 <div className="flex items-center gap-2.5 min-w-0">
-                  {user.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt={user.username}
-                      className="w-9 h-9 rounded-full object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#1D9BF0]/15 flex items-center justify-center text-[13px] font-bold text-[#1D9BF0] shrink-0 select-none">
+                  <Avatar className="size-9 shrink-0">
+                    {user.avatar_url && (
+                      <AvatarImage src={user.avatar_url} alt={user.username} className="object-cover" />
+                    )}
+                    <AvatarFallback className="bg-[#1D9BF0]/15 text-[#1D9BF0] text-[13px] font-bold">
                       {initial}
-                    </div>
-                  )}
+                    </AvatarFallback>
+                  </Avatar>
+
                   <div className="min-w-0">
                     <div className="flex items-center gap-1 min-w-0">
-                      <p className="text-[13px] font-bold text-white truncate leading-tight">
+                      <p className="text-[13px] font-bold text-foreground truncate leading-tight">
                         {displayName}
                       </p>
                       {user.role === "Prof" && (
                         <BadgeCheck className="size-[14px] text-[#1D9BF0] shrink-0" />
                       )}
                     </div>
-                    <p className="text-[12px] text-[#71767B] truncate">@{user.username}</p>
+                    <p className="text-[12px] text-muted-foreground truncate">@{user.username}</p>
                     {followsYou && !isFollowed && (
-                      <p className="text-[11px] text-[#71767B]">Follows you</p>
+                      <Badge variant="secondary" className="text-[11px] px-0 font-normal border-0 bg-transparent">
+                        Follows you
+                      </Badge>
                     )}
                   </div>
                 </div>
 
-                {/* Follow / Follow Back / Following button */}
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => !isFollowed && handleFollow(user.id)}
                   disabled={isFollowed}
                   className={cn(
-                    "shrink-0 h-7 px-3 rounded-full text-[12px] font-bold transition-colors whitespace-nowrap",
+                    "shrink-0 h-7 px-3 rounded-full text-[12px] font-bold whitespace-nowrap",
                     isFollowed
-                      ? "bg-[#00BA7C]/15 text-[#00BA7C] border border-[#00BA7C]/30 cursor-default"
+                      ? "bg-[#00BA7C]/15 text-[#00BA7C] border-[#00BA7C]/30 hover:bg-[#00BA7C]/15 hover:text-[#00BA7C]"
                       : followsYou
-                      ? "bg-[#1D9BF0]/15 text-[#1D9BF0] border border-[#1D9BF0]/30 hover:bg-[#1D9BF0]/25 cursor-pointer"
-                      : "border border-[#2F3336] text-white hover:bg-white/[0.06] cursor-pointer"
+                      ? "bg-[#1D9BF0]/15 text-[#1D9BF0] border-[#1D9BF0]/30 hover:bg-[#1D9BF0]/25 hover:text-[#1D9BF0]"
+                      : ""
                   )}
                 >
                   {isFollowed ? "Following" : followsYou ? "Follow Back" : "Follow"}
-                </button>
+                </Button>
               </div>
             )
           })}

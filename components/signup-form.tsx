@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
   const supabase = createClient()
@@ -34,8 +34,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
         data: {
           display_name: username,
           full_name: username,
-        }
-      }
+        },
+      },
     })
 
     if (signupError) {
@@ -45,7 +45,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
     }
 
     if (!data.session) {
-      // Email confirmation required — session not yet established
       setMessage("Check your email to confirm your account before logging in.")
       setLoading(false)
       return
@@ -76,73 +75,72 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
           <CardDescription>Enter your details to get started</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignup} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="mansij07"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Role</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    value="Student"
-                    checked={role === "Student"}
-                    onChange={() => setRole("Student")}
-                  />
-                  Student
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    value="Prof"
-                    checked={role === "Prof"}
-                    onChange={() => setRole("Prof")}
-                  />
-                  Professor
-                </label>
-              </div>
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            {message && <p className="text-sm text-green-500">{message}</p>}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating account..." : "Sign up"}
-            </Button>
-            <p className="text-center text-sm">
-              Already have an account?{" "}
-              <a href="/login" className="underline underline-offset-4">
-                Login
-              </a>
-            </p>
+          <form onSubmit={handleSignup}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="mansij07"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Role</FieldLabel>
+                <ToggleGroup
+                  type="single"
+                  value={role}
+                  onValueChange={(v) => v && setRole(v as "Student" | "Prof")}
+                  spacing={0}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <ToggleGroupItem value="Student" className="flex-1">
+                    Student
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="Prof" className="flex-1">
+                    Professor
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </Field>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              {message && <p className="text-sm text-green-500">{message}</p>}
+              <Field>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Creating account..." : "Sign up"}
+                </Button>
+                <FieldDescription className="text-center">
+                  Already have an account?{" "}
+                  <a href="/login" className="underline underline-offset-4">
+                    Login
+                  </a>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
           </form>
         </CardContent>
       </Card>

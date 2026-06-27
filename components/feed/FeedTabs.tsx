@@ -1,7 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface FeedTabsProps {
   activeTab: "all" | "following"
@@ -9,33 +8,25 @@ interface FeedTabsProps {
 }
 
 export function FeedTabs({ activeTab, setActiveTab }: FeedTabsProps) {
-  const tabs = [
-    { key: "all" as const, label: "All Posts" },
-    { key: "following" as const, label: "Following" },
-  ]
-
   return (
-    <div className="flex border-b border-[#2F3336]">
-      {tabs.map(({ key, label }) => (
-        <button
-          key={key}
-          onClick={() => setActiveTab(key)}
-          className={cn(
-            "flex-1 py-4 text-[15px] relative transition-colors hover:bg-white/5",
-            activeTab === key
-              ? "font-bold text-white"
-              : "font-medium text-[#71767B] hover:text-white"
-          )}
+    <Tabs
+      value={activeTab}
+      onValueChange={(v) => setActiveTab(v as "all" | "following")}
+    >
+      <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0 gap-0">
+        <TabsTrigger
+          value="all"
+          className="flex-1 py-4 rounded-none text-[15px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground data-[state=active]:font-bold data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#1D9BF0] transition-colors"
         >
-          {label}
-          {activeTab === key && (
-            <motion.div
-              layoutId="feed-tab-underline"
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-14 rounded-full bg-[#1D9BF0]"
-            />
-          )}
-        </button>
-      ))}
-    </div>
+          All Posts
+        </TabsTrigger>
+        <TabsTrigger
+          value="following"
+          className="flex-1 py-4 rounded-none text-[15px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground data-[state=active]:font-bold data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#1D9BF0] transition-colors"
+        >
+          Following
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   )
 }
