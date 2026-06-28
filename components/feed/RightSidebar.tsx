@@ -38,7 +38,7 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
 
   return (
     <div className="w-full flex flex-col gap-4 pb-8">
-      <div className="w-full rounded-2xl border border-border bg-card p-5">
+      <div className="w-full rounded-xl border border-border bg-card p-5">
         <h2 className="font-bold text-[17px] text-foreground mb-4">Who to Follow</h2>
         <div className="flex flex-col gap-4">
           {suggestions.map((user) => {
@@ -54,7 +54,7 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
                     {user.avatar_url && (
                       <AvatarImage src={user.avatar_url} alt={user.username} className="object-cover" />
                     )}
-                    <AvatarFallback className="bg-[#1D9BF0]/15 text-[#1D9BF0] text-[13px] font-bold">
+                    <AvatarFallback className="bg-muted text-foreground text-[13px] font-bold">
                       {initial}
                     </AvatarFallback>
                   </Avatar>
@@ -65,7 +65,7 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
                         {displayName}
                       </p>
                       {user.role === "Prof" && (
-                        <BadgeCheck className="size-[14px] text-[#1D9BF0] shrink-0" />
+                        <BadgeCheck className="size-[14px] text-foreground shrink-0" />
                       )}
                     </div>
                     <p className="text-[12px] text-muted-foreground truncate">@{user.username}</p>
@@ -85,9 +85,9 @@ export function RightSidebar({ suggestions, currentUserId, followsYouIds }: Righ
                   className={cn(
                     "shrink-0 h-7 px-3 rounded-full text-[12px] font-bold whitespace-nowrap",
                     isFollowed
-                      ? "bg-[#00BA7C]/15 text-[#00BA7C] border-[#00BA7C]/30 hover:bg-[#00BA7C]/15 hover:text-[#00BA7C]"
+                      ? "bg-muted text-muted-foreground border-border hover:bg-muted hover:text-muted-foreground"
                       : followsYou
-                      ? "bg-[#1D9BF0]/15 text-[#1D9BF0] border-[#1D9BF0]/30 hover:bg-[#1D9BF0]/25 hover:text-[#1D9BF0]"
+                      ? "bg-secondary text-foreground border-border hover:bg-muted hover:text-foreground"
                       : ""
                   )}
                 >

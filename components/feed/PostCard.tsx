@@ -1,11 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, Bookmark, Share2, Repeat2, BarChart2, BadgeCheck } from "lucide-react"
+import { Share2, BarChart2, BadgeCheck } from "lucide-react"
 import { LikeButton } from "./LikeButton"
+import { CommentButton } from "./CommentButton"
+import { RepostButton } from "./RepostButton"
+import { BookmarkButton } from "./BookmarkButton"
 import { MediaViewer, type MediaItem } from "./MediaViewer"
 import { MediaCollage } from "./MediaCollage"
 import { formatRelativeTime } from "./utils"
+import { renderWithMentions } from "@/lib/mentions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -18,8 +22,6 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, userId = "", onPostClick, isFullView = false }: PostCardProps) {
-  const [bookmarked, setBookmarked] = useState(false)
-  const [reposted, setReposted] = useState(false)
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
   const mediaItems: MediaItem[] = Array.isArray(post.media) && post.media.length > 0
@@ -40,16 +42,6 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
     if (onPostClick) onPostClick(post.id)
   }
 
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setBookmarked((b) => !b)
-  }
-
-  const handleRepost = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setReposted((r) => !r)
-  }
-
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -66,7 +58,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
           "flex gap-3 transition-colors duration-150",
           isFullView
             ? "px-5 pt-4 pb-3 border-b border-border"
-            : "mb-4 p-5 rounded-2xl border border-border bg-card",
+            : "mb-4 p-5 rounded-xl border border-border bg-card",
           !isFullView && onPostClick && "hover:bg-accent/50 cursor-pointer",
           isFullView && onPostClick && "hover:bg-accent/30 cursor-pointer"
         )}
@@ -90,7 +82,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
               {displayName}
             </span>
             {authorRole === "Prof" && (
-              <BadgeCheck className="size-[15px] text-[#1D9BF0] shrink-0" />
+              <BadgeCheck className="size-[15px] text-foreground shrink-0" />
             )}
             <span className="text-[15px] text-muted-foreground shrink-0 hidden sm:inline">
               @{username}
@@ -107,7 +99,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
               isFullView ? "text-[17px]" : "text-[15px]"
             )}
           >
-            {post.content}
+            {renderWithMentions(post.content)}
           </p>
 
           {mediaItems.length > 0 && (
@@ -118,61 +110,32 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
             className="flex items-center justify-between text-muted-foreground -ml-2 max-w-[420px]"
             onClick={(e) => e.stopPropagation()}
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full text-muted-foreground hover:bg-[#1D9BF0]/10 hover:text-[#1D9BF0]"
-              aria-label="Reply"
-            >
-              <MessageCircle className="size-[18px]" />
-            </Button>
+            <CommentButton
+              postId={post.id}
+              initialCount={post.commentCount || 0}
+              onClick={() => onPostClick?.(post.id)}
+            />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRepost}
-              className={cn(
-                "rounded-full",
-                reposted
-                  ? "text-[#00BA7C]"
-                  : "text-muted-foreground hover:bg-[#00BA7C]/10 hover:text-[#00BA7C]"
-              )}
-              aria-label={reposted ? "Undo repost" : "Repost"}
-            >
-              <Repeat2 className="size-[18px]" />
-            </Button>
+            <RepostButton postId={post.id} userId={userId} initialCount={post.repostCount || 0} />
 
             <LikeButton postId={post.id} userId={userId} initialCount={post.likeCount || 0} />
 
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-muted-foreground hover:bg-[#1D9BF0]/10 hover:text-[#1D9BF0]"
+              className="rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Views"
             >
               <BarChart2 className="size-[18px]" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBookmark}
-              className={cn(
-                "rounded-full",
-                bookmarked
-                  ? "text-[#1D9BF0]"
-                  : "text-muted-foreground hover:bg-[#1D9BF0]/10 hover:text-[#1D9BF0]"
-              )}
-              aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
-            >
-              <Bookmark className={cn("size-[18px]", bookmarked && "fill-[#1D9BF0]")} />
-            </Button>
+            <BookmarkButton postId={post.id} userId={userId} />
 
             <Button
               variant="ghost"
               size="icon"
               onClick={handleShare}
-              className="rounded-full text-muted-foreground hover:bg-[#1D9BF0]/10 hover:text-[#1D9BF0]"
+              className="rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Share"
             >
               <Share2 className="size-[18px]" />

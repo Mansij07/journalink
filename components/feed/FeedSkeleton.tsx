@@ -6,7 +6,7 @@ export function FeedSkeleton({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-border bg-card p-5 flex gap-3"
+          className="rounded-xl border border-border bg-card p-5 flex gap-3"
         >
           <Skeleton className="size-10 rounded-full shrink-0 mt-0.5" />
 

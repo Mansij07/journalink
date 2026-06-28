@@ -7,7 +7,6 @@ import { CommentInput } from "./CommentInput"
 import { CommentCard } from "./CommentCard"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 
 interface PostFullViewProps {
   postId: string
@@ -76,7 +75,7 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
   if (!post) {
     return (
       <div className="flex flex-col">
-        <div className="flex items-center gap-6 px-4 py-3 border-b border-border sticky top-0 bg-background/85 backdrop-blur-md z-10">
+        <div className="flex items-center gap-6 px-4 py-3 border-b border-border sticky top-16 bg-background z-10">
           <Button
             variant="ghost"
             size="icon"
@@ -94,8 +93,9 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
   }
 
   return (
-    <div className="flex flex-col pb-20">
-      <div className="flex items-center gap-6 px-4 py-3 border-b border-border sticky top-0 bg-background/85 backdrop-blur-md z-10">
+    <div className="flex flex-col gap-4 pb-20">
+      {/* Sticky back bar — sits just under the global nav */}
+      <div className="-mx-px flex items-center gap-4 border-b border-border bg-background px-1 py-3 sticky top-16 z-10">
         <Button
           variant="ghost"
           size="icon"
@@ -105,25 +105,27 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
         >
           <ArrowLeft className="size-5" />
         </Button>
-        <h2 className="font-bold text-[20px] text-foreground">Post</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground">Post</h2>
       </div>
 
-      <PostCard post={post} isFullView />
+      {/* Post — same card structure as the feed */}
+      <PostCard post={post} userId={userId} />
 
-      <div>
-        <div className="px-4 py-3 font-bold text-[17px] text-foreground">Replies</div>
-        <Separator />
+      {/* Replies, grouped in a matching card */}
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-5 py-3 text-[15px] font-semibold text-foreground">
+          Replies
+        </div>
         <CommentInput postId={postId} userId={userId} onCommentAdded={fetchPostAndComments} />
-      </div>
-
-      <div>
         {commentsError ? (
-          <p className="text-muted-foreground text-[15px] text-center py-8">Replies unavailable.</p>
+          <p className="py-8 text-center text-[15px] text-muted-foreground">Replies unavailable.</p>
         ) : comments.length === 0 ? (
-          <p className="text-muted-foreground text-[15px] text-center py-8">No replies yet. Be the first!</p>
+          <p className="py-8 text-center text-[15px] text-muted-foreground">
+            No replies yet. Be the first!
+          </p>
         ) : (
           comments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
+            <CommentCard key={comment.id} comment={comment} userId={userId} />
           ))
         )}
       </div>

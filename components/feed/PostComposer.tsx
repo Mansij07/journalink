@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
+import { MentionInput } from "./MentionInput"
 import { cn } from "@/lib/utils"
 
 const MAX_CHARS = 500
@@ -150,22 +150,23 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex gap-3">
         <Avatar className="size-10 shrink-0 mt-1">
           {avatarUrl && (
             <AvatarImage src={avatarUrl} alt={username} className="object-cover" />
           )}
-          <AvatarFallback className="bg-[#1D9BF0]/15 text-[#1D9BF0] text-sm font-bold">
+          <AvatarFallback className="bg-muted text-foreground text-sm font-bold">
             {initial}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <Textarea
-            placeholder="What's happening on campus?"
+          <MentionInput
+            placeholder="What's happening on campus? Use @ to tag people you follow."
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
+            currentUserId={userId}
             rows={2}
             className="w-full bg-transparent resize-none pt-2 text-[18px] placeholder:text-muted-foreground focus-visible:ring-0 leading-relaxed border-none shadow-none p-0"
           />
@@ -179,9 +180,9 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
                   className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-normal"
                 >
                   {m.type === "video" ? (
-                    <Video className="size-3 shrink-0 text-blue-400" />
+                    <Video className="size-3 shrink-0 text-muted-foreground" />
                   ) : (
-                    <ImageIcon className="size-3 shrink-0 text-green-400" />
+                    <ImageIcon className="size-3 shrink-0 text-muted-foreground" />
                   )}
                   <span className="truncate max-w-[120px]">{m.file.name}</span>
                   <button
@@ -198,7 +199,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
                   variant="secondary"
                   className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-normal"
                 >
-                  <FileText className="size-3 shrink-0 text-[#1D9BF0]" />
+                  <FileText className="size-3 shrink-0 text-muted-foreground" />
                   <span className="truncate max-w-[120px]">{attachedDoc.file.name}</span>
                   <button
                     onClick={() => setAttachedDoc(null)}
@@ -227,7 +228,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             className="rounded-full text-[13px]"
             aria-label="Attach photo"
           >
-            <ImageIcon data-icon="inline-start" className="text-green-400" />
+            <ImageIcon data-icon="inline-start" />
             Photo
           </Button>
 
@@ -238,7 +239,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             className="rounded-full text-[13px]"
             aria-label="Attach video"
           >
-            <Video data-icon="inline-start" className="text-blue-400" />
+            <Video data-icon="inline-start" />
             Video
           </Button>
 

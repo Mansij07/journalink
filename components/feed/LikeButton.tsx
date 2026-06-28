@@ -69,14 +69,20 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
       asChild
       className={cn(
         "rounded-full transition-colors",
+        // Light mode: red accent. Dark mode stays monochrome graphite.
         liked
-          ? "text-[#F91880]"
-          : "text-muted-foreground hover:bg-[#F91880]/10 hover:text-[#F91880]"
+          ? "text-red-600 dark:text-foreground"
+          : "text-muted-foreground hover:bg-red-500/10 hover:text-red-600 dark:hover:bg-muted dark:hover:text-foreground"
       )}
       aria-label={liked ? "Unlike" : "Like"}
     >
       <motion.button whileTap={{ scale: 0.85 }} onClick={toggleLike}>
-        <Heart className={cn("size-[18px]", liked && "fill-[#F91880]")} />
+        <Heart
+          className={cn(
+            "size-[18px]",
+            liked && "fill-red-600 dark:fill-foreground"
+          )}
+        />
         {count > 0 && <span className="text-[13px] ml-1">{count}</span>}
       </motion.button>
     </Button>

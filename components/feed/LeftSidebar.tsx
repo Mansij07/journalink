@@ -26,13 +26,13 @@ export function LeftSidebar({ profile, followersCount, followingCount, projectsC
   return (
     <div className="w-full flex flex-col gap-5 pb-8">
 
-      <div className="w-full rounded-2xl border border-border bg-card p-6 flex flex-col items-center text-center gap-4">
+      <div className="w-full rounded-xl border border-border bg-card p-6 flex flex-col items-center text-center gap-4">
 
         <Avatar className="size-20 ring-2 ring-border ring-offset-2 ring-offset-card">
           {avatarUrl && (
             <AvatarImage src={avatarUrl} alt={username} className="object-cover" />
           )}
-          <AvatarFallback className="bg-[#1D9BF0]/15 text-[#1D9BF0] text-[28px] font-bold">
+          <AvatarFallback className="bg-muted text-foreground text-[28px] font-bold">
             {initial}
           </AvatarFallback>
         </Avatar>
@@ -46,7 +46,7 @@ export function LeftSidebar({ profile, followersCount, followingCount, projectsC
           className={cn(
             "rounded-full font-semibold text-[12px] border-0",
             role === "Prof"
-              ? "bg-[#1D9BF0]/15 text-[#1D9BF0] hover:bg-[#1D9BF0]/15"
+              ? "bg-foreground text-background hover:bg-foreground"
               : "bg-muted text-muted-foreground hover:bg-muted"
           )}
         >
@@ -87,9 +87,9 @@ export function LeftSidebar({ profile, followersCount, followingCount, projectsC
       <Button
         variant="outline"
         asChild
-        className="w-full h-12 rounded-2xl font-bold"
+        className="w-full h-12 rounded-lg font-bold"
       >
-        <Link href="/onboarding">
+        <Link href="/settings">
           <Edit2 data-icon="inline-start" />
           Edit Profile
         </Link>

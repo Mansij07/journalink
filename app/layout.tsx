@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AutoLogout } from "@/components/AutoLogout";
 import { ConditionalNavbar } from "@/components/layout/ConditionalNavbar";
-
-const inter = Inter({ subsets: ["latin"] });
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "Journalink",
@@ -17,11 +17,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased dark">
-      <body className={`${inter.className} min-h-full flex flex-col`}>
-        <AutoLogout />
-        <ConditionalNavbar />
-        {children}
+    <html
+      lang="en"
+      className={`h-full antialiased ${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AutoLogout />
+          <ConditionalNavbar />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

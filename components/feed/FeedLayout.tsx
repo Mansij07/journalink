@@ -106,8 +106,8 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
         <div className="flex items-start gap-6">
 
           <aside
-            className="hidden xl:block shrink-0 sticky top-6 overflow-y-auto"
-            style={{ width: "260px", maxHeight: "calc(100vh - 1.5rem)" }}
+            className="hidden xl:block shrink-0 sticky top-[88px] overflow-y-auto"
+            style={{ width: "260px", maxHeight: "calc(100vh - 104px)" }}
           >
             <LeftSidebar
               profile={profile}
@@ -157,8 +157,8 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
           </main>
 
           <aside
-            className="hidden xl:block shrink-0 sticky top-6 overflow-y-auto"
-            style={{ width: "260px", maxHeight: "calc(100vh - 1.5rem)" }}
+            className="hidden xl:block shrink-0 sticky top-[88px] overflow-y-auto"
+            style={{ width: "260px", maxHeight: "calc(100vh - 104px)" }}
           >
             <RightSidebar suggestions={suggestions} currentUserId={userId} followsYouIds={followsYouIds} />
           </aside>

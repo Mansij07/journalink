@@ -4,7 +4,7 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { MentionInput } from "./MentionInput"
 
 interface CommentInputProps {
   postId: string
@@ -43,10 +43,11 @@ export function CommentInput({ postId, userId, onCommentAdded }: CommentInputPro
       </Avatar>
 
       <div className="flex-1 flex flex-col gap-2">
-        <Textarea
+        <MentionInput
           placeholder="Post your reply"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
+          currentUserId={userId}
           rows={3}
           className="w-full bg-transparent resize-none text-[15px] placeholder:text-muted-foreground focus-visible:ring-0 leading-relaxed border-none shadow-none p-0"
         />

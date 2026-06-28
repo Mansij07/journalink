@@ -3,12 +3,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "./utils"
+import { CommentReactions } from "./CommentReactions"
+import { renderWithMentions } from "@/lib/mentions"
 
 interface CommentCardProps {
   comment: any
+  userId?: string
 }
 
-export function CommentCard({ comment }: CommentCardProps) {
+export function CommentCard({ comment, userId = "" }: CommentCardProps) {
   const authorName = comment.profiles?.username || "Unknown"
   const authorRole = comment.profiles?.role || "Student"
   const avatarUrl = comment.profiles?.avatar_url || null
@@ -35,8 +38,9 @@ export function CommentCard({ comment }: CommentCardProps) {
           </span>
         </div>
         <p className="text-[15px] text-foreground leading-normal whitespace-pre-wrap break-words">
-          {comment.content}
+          {renderWithMentions(comment.content)}
         </p>
+        {userId && <CommentReactions commentId={comment.id} userId={userId} />}
       </div>
     </div>
   )

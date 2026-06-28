@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { Search } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
@@ -78,21 +79,23 @@ export function ProfileClient() {
           </InputGroup>
 
           {open && (
-            <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-xl z-50 overflow-hidden shadow-lg">
+            <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-xl z-50 overflow-hidden">
 
               {profiles.length > 0 && (
                 <div>
                   <p className="text-xs text-muted-foreground px-3 pt-3 pb-1">Profiles</p>
                   {profiles.map((profile) => (
-                    <div
+                    <Link
                       key={profile.id}
+                      href={`/profiles/${profile.username}`}
+                      onClick={() => setOpen(false)}
                       className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer"
                     >
                       <span className="text-foreground text-sm">{profile.username}</span>
                       <Badge variant="secondary" className="text-xs">
                         {profile.role}
                       </Badge>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -105,8 +108,10 @@ export function ProfileClient() {
                 <div>
                   <p className="text-xs text-muted-foreground px-3 pt-3 pb-1">Projects</p>
                   {projects.map((project) => (
-                    <div
+                    <Link
                       key={project.id}
+                      href={`/projects/${project.id}`}
+                      onClick={() => setOpen(false)}
                       className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer"
                     >
                       <div className="min-w-0">
@@ -122,13 +127,13 @@ export function ProfileClient() {
                           {project.type}
                         </Badge>
                         <Badge
-                          variant={project.status === "Open" ? "default" : "destructive"}
+                          variant={project.status === "Open" ? "default" : "secondary"}
                           className="text-xs"
                         >
                           {project.status}
                         </Badge>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
