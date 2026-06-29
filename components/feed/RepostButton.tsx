@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Repeat2 } from "lucide-react"
 import { motion } from "framer-motion"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -15,7 +14,6 @@ interface RepostButtonProps {
 }
 
 export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonProps) {
-  const [supabase] = useState(() => createClient())
   const [reposted, setReposted] = useState(false)
   const [count, setCount] = useState(initialCount)
   const [loaded, setLoaded] = useState(false)
@@ -23,26 +21,16 @@ export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonP
   useEffect(() => {
     if (!postId || !userId) return
     let cancelled = false
-    const fetch = async () => {
-      const [{ count: total }, { data: mine }] = await Promise.all([
-        supabase
-          .from("post_reposts")
-          .select("*", { count: "exact", head: true })
-          .eq("post_id", postId),
-        supabase
-          .from("post_reposts")
-          .select("post_id")
-          .eq("post_id", postId)
-          .eq("user_id", userId)
-          .maybeSingle(),
-      ])
-      if (!cancelled) {
+    const load = async () => {
+      const res = await fetch(`/api/posts/${postId}/reposts`)
+      if (res.ok && !cancelled) {
+        const { count: total, reposted: mine } = await res.json()
         setCount(total ?? initialCount)
         setReposted(!!mine)
         setLoaded(true)
       }
     }
-    fetch()
+    load()
     return () => {
       cancelled = true
     }
@@ -55,11 +43,7 @@ export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonP
     const was = reposted
     setReposted(!was)
     setCount((c) => (was ? c - 1 : c + 1))
-    if (was) {
-      await supabase.from("post_reposts").delete().eq("post_id", postId).eq("user_id", userId)
-    } else {
-      await supabase.from("post_reposts").insert({ post_id: postId, user_id: userId })
-    }
+    await fetch(`/api/posts/${postId}/reposts`, { method: was ? "DELETE" : "POST" })
   }
 
   return (

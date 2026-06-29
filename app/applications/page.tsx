@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
-import { acceptCapForYear } from "@/lib/profile"
+import { acceptCapForYear, getProfileById } from "@/lib/profile"
 import {
   ApplicationsView,
   type StudentApplication,
@@ -15,11 +15,7 @@ export default async function ApplicationsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, year")
-    .eq("id", user.id)
-    .single()
+  const profile = await getProfileById(supabase, user.id)
 
   const isProf = (profile?.role ?? "Student") === "Prof"
   const acceptCap = acceptCapForYear(profile?.year ?? null)

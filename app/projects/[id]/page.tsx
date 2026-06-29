@@ -3,8 +3,9 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CalendarDays, Users } from "lucide-react"
 
-import type { ApplicationStatus, ProjectWithProfessor } from "@/lib/types"
-import { isProfileComplete } from "@/lib/profile"
+import type { ApplicationStatus } from "@/lib/types"
+import { getProfileById, isProfileComplete } from "@/lib/profile"
+import { getProjectById } from "@/lib/projects"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -22,20 +23,16 @@ export default async function ProjectDetailPage({
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: project } = await supabase
-    .from("project")
-    .select("*, profiles!professor_id(id, username, full_name, avatar_url, role)")
-    .eq("id", id)
-    .single()
+  const project = await getProjectById(supabase, id)
 
   if (!project) notFound()
 
-  const typed = project as ProjectWithProfessor
+  const typed = project
   const isOwner = typed.professor_id === user.id
 
   // Student: have they already applied? Owner: how many applications?
   // Also load the viewer's profile to gate the Apply action.
-  const [{ data: myApplication }, { count: applicationCount }, { data: viewer }] =
+  const [{ data: myApplication }, { count: applicationCount }, viewer] =
     await Promise.all([
       supabase
         .from("applications")
@@ -49,11 +46,7 @@ export default async function ProjectDetailPage({
             .select("*", { count: "exact", head: true })
             .eq("project_id", typed.id)
         : Promise.resolve({ count: 0 }),
-      supabase
-        .from("profiles")
-        .select("role, full_name, branch, year")
-        .eq("id", user.id)
-        .single(),
+      getProfileById(supabase, user.id),
     ])
 
   const isStudent = (viewer?.role ?? "Student") !== "Prof"

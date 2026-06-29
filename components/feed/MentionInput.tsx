@@ -2,7 +2,6 @@
 
 import * as React from "react"
 
-import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -34,7 +33,6 @@ export function MentionInput({
   className,
   autoFocus,
 }: MentionInputProps) {
-  const [supabase] = React.useState(() => createClient())
   const ref = React.useRef<HTMLTextAreaElement>(null)
   const [followed, setFollowed] = React.useState<FollowedProfile[]>([])
   const [open, setOpen] = React.useState(false)
@@ -46,23 +44,16 @@ export function MentionInput({
     if (!currentUserId) return
     let cancelled = false
     const load = async () => {
-      const { data: follows } = await supabase
-        .from("follows")
-        .select("following_id")
-        .eq("follower_id", currentUserId)
-      const ids = (follows ?? []).map((f) => f.following_id)
-      if (ids.length === 0) return
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url")
-        .in("id", ids)
-      if (!cancelled) setFollowed((profiles as FollowedProfile[]) ?? [])
+      const res = await fetch("/api/mentions")
+      if (!res.ok || cancelled) return
+      const { profiles } = await res.json()
+      setFollowed((profiles as FollowedProfile[]) ?? [])
     }
     load()
     return () => {
       cancelled = true
     }
-  }, [supabase, currentUserId])
+  }, [currentUserId])
 
   const suggestions = React.useMemo(() => {
     const q = query.toLowerCase()

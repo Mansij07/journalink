@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
 interface FollowButtonProps {
@@ -18,7 +17,6 @@ export function FollowButton({
   initialFollowing,
 }: FollowButtonProps) {
   const router = useRouter()
-  const [supabase] = React.useState(() => createClient())
   const [following, setFollowing] = React.useState(initialFollowing)
   const [pending, setPending] = React.useState(false)
 
@@ -27,18 +25,14 @@ export function FollowButton({
     const next = !following
     setFollowing(next) // optimistic
 
-    const { error } = next
-      ? await supabase
-          .from("follows")
-          .insert({ follower_id: currentUserId, following_id: targetId })
-      : await supabase
-          .from("follows")
-          .delete()
-          .eq("follower_id", currentUserId)
-          .eq("following_id", targetId)
+    const res = await fetch("/api/follows", {
+      method: next ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetId }),
+    })
 
     setPending(false)
-    if (error) {
+    if (!res.ok) {
       setFollowing(!next) // revert
       return
     }

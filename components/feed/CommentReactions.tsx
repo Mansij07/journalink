@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
 import { motion } from "framer-motion"
 
-import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 type Reaction = "like" | "dislike" | null
@@ -15,7 +14,6 @@ interface CommentReactionsProps {
 }
 
 export function CommentReactions({ commentId, userId }: CommentReactionsProps) {
-  const [supabase] = useState(() => createClient())
   const [mine, setMine] = useState<Reaction>(null)
   const [likes, setLikes] = useState(0)
   const [dislikes, setDislikes] = useState(0)
@@ -24,32 +22,16 @@ export function CommentReactions({ commentId, userId }: CommentReactionsProps) {
   useEffect(() => {
     if (!commentId || !userId) return
     let cancelled = false
-    const fetch = async () => {
-      const [{ count: likeCount }, { count: dislikeCount }, { data: my }] = await Promise.all([
-        supabase
-          .from("comment_reactions")
-          .select("*", { count: "exact", head: true })
-          .eq("comment_id", commentId)
-          .eq("value", "like"),
-        supabase
-          .from("comment_reactions")
-          .select("*", { count: "exact", head: true })
-          .eq("comment_id", commentId)
-          .eq("value", "dislike"),
-        supabase
-          .from("comment_reactions")
-          .select("value")
-          .eq("comment_id", commentId)
-          .eq("user_id", userId)
-          .maybeSingle(),
-      ])
-      if (cancelled) return
+    const load = async () => {
+      const res = await fetch(`/api/comments/${commentId}/reactions`)
+      if (!res.ok || cancelled) return
+      const { likes: likeCount, dislikes: dislikeCount, mine: my } = await res.json()
       setLikes(likeCount ?? 0)
       setDislikes(dislikeCount ?? 0)
-      setMine((my?.value as Reaction) ?? null)
+      setMine((my as Reaction) ?? null)
       setLoaded(true)
     }
-    fetch()
+    load()
     return () => {
       cancelled = true
     }
@@ -65,11 +47,7 @@ export function CommentReactions({ commentId, userId }: CommentReactionsProps) {
       setMine(null)
       if (value === "like") setLikes((c) => c - 1)
       else setDislikes((c) => c - 1)
-      await supabase
-        .from("comment_reactions")
-        .delete()
-        .eq("comment_id", commentId)
-        .eq("user_id", userId)
+      await fetch(`/api/comments/${commentId}/reactions`, { method: "DELETE" })
       return
     }
 
@@ -82,12 +60,11 @@ export function CommentReactions({ commentId, userId }: CommentReactionsProps) {
       setDislikes((c) => c + 1)
       if (prev === "like") setLikes((c) => c - 1)
     }
-    await supabase
-      .from("comment_reactions")
-      .upsert(
-        { comment_id: commentId, user_id: userId, value },
-        { onConflict: "comment_id,user_id" }
-      )
+    await fetch(`/api/comments/${commentId}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value }),
+    })
   }
 
   return (

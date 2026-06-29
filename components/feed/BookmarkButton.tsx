@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Bookmark } from "lucide-react"
 import { motion } from "framer-motion"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -14,26 +13,21 @@ interface BookmarkButtonProps {
 }
 
 export function BookmarkButton({ postId, userId }: BookmarkButtonProps) {
-  const [supabase] = useState(() => createClient())
   const [saved, setSaved] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     if (!postId || !userId) return
     let cancelled = false
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("post_bookmarks")
-        .select("post_id")
-        .eq("post_id", postId)
-        .eq("user_id", userId)
-        .maybeSingle()
-      if (!cancelled) {
-        setSaved(!!data)
+    const load = async () => {
+      const res = await fetch(`/api/posts/${postId}/bookmarks`)
+      if (res.ok && !cancelled) {
+        const { bookmarked } = await res.json()
+        setSaved(!!bookmarked)
         setLoaded(true)
       }
     }
-    fetch()
+    load()
     return () => {
       cancelled = true
     }
@@ -45,11 +39,7 @@ export function BookmarkButton({ postId, userId }: BookmarkButtonProps) {
     if (!loaded) return
     const was = saved
     setSaved(!was)
-    if (was) {
-      await supabase.from("post_bookmarks").delete().eq("post_id", postId).eq("user_id", userId)
-    } else {
-      await supabase.from("post_bookmarks").insert({ post_id: postId, user_id: userId })
-    }
+    await fetch(`/api/posts/${postId}/bookmarks`, { method: was ? "DELETE" : "POST" })
   }
 
   return (

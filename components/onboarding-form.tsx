@@ -29,13 +29,15 @@ export default function OnboardingForm() {
       return
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ username, role })
-      .eq("id", user.id)
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, role }),
+    })
 
-    if (error) {
-      setError(error.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Update failed" }))
+      setError(msg ?? "Update failed")
     } else {
       router.push("/feed")
     }

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { MentionInput } from "./MentionInput"
@@ -16,19 +15,21 @@ export function CommentInput({ postId, userId, onCommentAdded }: CommentInputPro
   const [content, setContent] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   const handleSubmit = async () => {
     if (!content.trim()) return
     setLoading(true)
     setError(null)
 
-    const { error: insertError } = await supabase
-      .from("comments")
-      .insert({ post_id: postId, content, author_id: userId })
+    const res = await fetch(`/api/posts/${postId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    })
 
-    if (insertError) {
-      setError(insertError.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Reply failed" }))
+      setError(msg ?? "Reply failed")
     } else {
       setContent("")
       onCommentAdded()

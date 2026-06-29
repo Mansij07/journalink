@@ -4,8 +4,10 @@ import * as React from "react"
 import Link from "next/link"
 import { Bell } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+
+/** How often to refresh the unread badge (ms). */
+const POLL_INTERVAL = 30_000
 
 interface NavNotificationBellProps {
   userId: string
@@ -13,7 +15,6 @@ interface NavNotificationBellProps {
 }
 
 export function NavNotificationBell({ userId, active }: NavNotificationBellProps) {
-  const [supabase] = React.useState(() => createClient())
   const [count, setCount] = React.useState(0)
 
   React.useEffect(() => {
@@ -21,36 +22,26 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
     let cancelled = false
 
     const loadCount = async () => {
-      const { count: unread, error } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("recipient_id", userId)
-        .eq("read", false)
-      // Table may not exist yet (managed in the Supabase dashboard); fail soft.
-      if (!cancelled && !error) setCount(unread ?? 0)
+      const res = await fetch("/api/notifications/unread-count")
+      // Endpoint/table may be unavailable; fail soft.
+      if (!cancelled && res.ok) {
+        const { count: unread } = await res.json()
+        setCount(unread ?? 0)
+      }
     }
 
     loadCount()
-
-    const channel = supabase
-      .channel(`notif-badge-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `recipient_id=eq.${userId}`,
-        },
-        () => loadCount()
-      )
-      .subscribe()
+    const timer = setInterval(loadCount, POLL_INTERVAL)
+    // Refresh when the tab regains focus, so the badge feels current.
+    const onFocus = () => loadCount()
+    window.addEventListener("focus", onFocus)
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
+      clearInterval(timer)
+      window.removeEventListener("focus", onFocus)
     }
-  }, [supabase, userId])
+  }, [userId])
 
   return (
     <Link

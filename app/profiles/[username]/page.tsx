@@ -3,8 +3,10 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { BadgeCheck, GraduationCap, Pencil, Briefcase } from "lucide-react"
 
-import type { ProjectWithProfessor } from "@/lib/types"
-import { acceptCapForYear } from "@/lib/profile"
+import { acceptCapForYear, getProfileByUsername } from "@/lib/profile"
+import { getFollowCounts } from "@/lib/social"
+import { getOwnerProjects } from "@/lib/projects"
+import { getAuthorPosts } from "@/lib/posts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,11 +28,7 @@ export default async function ProfilePage({
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .single()
+  const profile = await getProfileByUsername(supabase, username)
 
   if (!profile) notFound()
 
@@ -38,21 +36,13 @@ export default async function ProfilePage({
   const isProf = profile.role === "Prof"
 
   const [
-    { count: followers },
-    { count: following },
+    { followers, following },
     { data: followRow },
-    { data: posts },
-    { data: projects },
+    postList,
+    projectList,
     { count: confirmedCount },
   ] = await Promise.all([
-    supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", profile.id),
-    supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_id", profile.id),
+    getFollowCounts(supabase, profile.id),
     isMe
       ? Promise.resolve({ data: null })
       : supabase
@@ -61,20 +51,10 @@ export default async function ProfilePage({
           .eq("follower_id", user.id)
           .eq("following_id", profile.id)
           .maybeSingle(),
-    supabase
-      .from("post")
-      .select("*, profiles!author_id ( id, username, full_name, avatar_url, role )")
-      .eq("author_id", profile.id)
-      .order("created_at", { ascending: false })
-      .limit(20),
+    getAuthorPosts(supabase, profile.id),
     isProf
-      ? supabase
-          .from("project")
-          .select("*, profiles!professor_id ( id, username, full_name, avatar_url, role )")
-          .eq("professor_id", profile.id)
-          .eq("status", "Open")
-          .order("created_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
+      ? getOwnerProjects(supabase, profile.id, true)
+      : Promise.resolve([]),
     // Own student profile: how many projects they've accepted (for the cap line).
     isMe && !isProf
       ? supabase
@@ -87,8 +67,6 @@ export default async function ProfilePage({
 
   const displayName = profile.full_name || profile.username || "Unknown"
   const initials = displayName.slice(0, 2).toUpperCase()
-  const projectList = (projects as ProjectWithProfessor[]) ?? []
-  const postList = posts ?? []
   const acceptCap = acceptCapForYear(profile.year)
 
   return (

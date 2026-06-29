@@ -5,7 +5,6 @@ import Link from "next/link"
 import { FileText, Briefcase, Send } from "lucide-react"
 
 import type { ApplicationStatus } from "@/lib/types"
-import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -152,7 +151,6 @@ function StudentList({
   acceptCap: number
   confirmedCount: number
 }) {
-  const [supabase] = React.useState(() => createClient())
   const [items, setItems] = React.useState(applications)
   const [confirmed, setConfirmed] = React.useState(confirmedCount)
   const [pendingId, setPendingId] = React.useState<string | null>(null)
@@ -164,12 +162,11 @@ function StudentList({
   const accept = async (id: string) => {
     setPendingId(id)
     setError(null)
-    const { error: rpcError } = await supabase.rpc("confirm_application", {
-      p_application_id: id,
-    })
+    const res = await fetch(`/api/applications/${id}/confirm`, { method: "POST" })
     setPendingId(null)
-    if (rpcError) {
-      setError(rpcError.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Accept failed" }))
+      setError(msg ?? "Accept failed")
       return
     }
     setItems((list) => list.map((a) => (a.id === id ? { ...a, status: "confirmed" } : a)))
@@ -180,12 +177,13 @@ function StudentList({
     setPendingId(id)
     const prev = items
     setItems((list) => list.map((a) => (a.id === id ? { ...a, status: "declined" } : a)))
-    const { error: dbError } = await supabase
-      .from("applications")
-      .update({ status: "declined" })
-      .eq("id", id)
+    const res = await fetch(`/api/applications/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "declined" }),
+    })
     setPendingId(null)
-    if (dbError) setItems(prev)
+    if (!res.ok) setItems(prev)
   }
 
   return (
@@ -270,7 +268,6 @@ function StudentList({
 }
 
 function ProfessorList({ applications }: { applications: ProfessorApplication[] }) {
-  const [supabase] = React.useState(() => createClient())
   const [items, setItems] = React.useState(applications)
   const [pendingId, setPendingId] = React.useState<string | null>(null)
   const ref = useStaggerReveal<HTMLDivElement>(applications.length)
@@ -281,12 +278,13 @@ function ProfessorList({ applications }: { applications: ProfessorApplication[] 
     setItems((list) =>
       list.map((a) => (a.id === id ? { ...a, status } : a))
     )
-    const { error } = await supabase
-      .from("applications")
-      .update({ status })
-      .eq("id", id)
+    const res = await fetch(`/api/applications/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    })
     setPendingId(null)
-    if (error) setItems(prev) // revert on failure
+    if (!res.ok) setItems(prev) // revert on failure
   }
 
   return (

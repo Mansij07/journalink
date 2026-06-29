@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { BadgeCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -22,16 +21,17 @@ interface RightSidebarProps {
   followsYouIds: string[]
 }
 
-export function RightSidebar({ suggestions, currentUserId, followsYouIds }: RightSidebarProps) {
-  const [supabase] = useState(() => createClient())
+export function RightSidebar({ suggestions, followsYouIds }: RightSidebarProps) {
   const [followed, setFollowed] = useState<Set<string>>(new Set())
   const followsYouSet = new Set(followsYouIds)
 
   const handleFollow = async (targetId: string) => {
     setFollowed((prev) => new Set(prev).add(targetId))
-    await supabase
-      .from("follows")
-      .insert({ follower_id: currentUserId, following_id: targetId })
+    await fetch("/api/follows", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetId }),
+    })
   }
 
   if (suggestions.length === 0) return null

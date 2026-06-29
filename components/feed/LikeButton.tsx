@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Heart } from "lucide-react"
 import { motion } from "framer-motion"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -14,7 +13,6 @@ interface LikeButtonProps {
 }
 
 export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps) {
-  const [supabase] = useState(() => createClient())
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(initialCount)
   const [loaded, setLoaded] = useState(false)
@@ -23,27 +21,17 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
     if (!postId || !userId) return
     let cancelled = false
 
-    const fetch = async () => {
-      const [{ count: total }, { data: userLike }] = await Promise.all([
-        supabase
-          .from("post_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("post_id", postId),
-        supabase
-          .from("post_likes")
-          .select("post_id")
-          .eq("post_id", postId)
-          .eq("user_id", userId)
-          .maybeSingle(),
-      ])
-      if (!cancelled) {
+    const load = async () => {
+      const res = await fetch(`/api/posts/${postId}/likes`)
+      if (res.ok && !cancelled) {
+        const { count: total, liked: userLike } = await res.json()
         setCount(total ?? initialCount)
         setLiked(!!userLike)
         setLoaded(true)
       }
     }
 
-    fetch()
+    load()
     return () => { cancelled = true }
   }, [postId, userId])
 
@@ -55,11 +43,7 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
     setLiked(!wasLiked)
     setCount((prev) => (wasLiked ? prev - 1 : prev + 1))
 
-    if (wasLiked) {
-      await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId)
-    } else {
-      await supabase.from("post_likes").insert({ post_id: postId, user_id: userId })
-    }
+    await fetch(`/api/posts/${postId}/likes`, { method: wasLiked ? "DELETE" : "POST" })
   }
 
   return (

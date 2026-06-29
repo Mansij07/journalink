@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { MessageCircle } from "lucide-react"
 import { motion } from "framer-motion"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
 interface CommentButtonProps {
@@ -14,20 +13,19 @@ interface CommentButtonProps {
 }
 
 export function CommentButton({ postId, initialCount = 0, onClick }: CommentButtonProps) {
-  const [supabase] = useState(() => createClient())
   const [count, setCount] = useState(initialCount)
 
   useEffect(() => {
     if (!postId) return
     let cancelled = false
-    const fetch = async () => {
-      const { count: total } = await supabase
-        .from("comments")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", postId)
-      if (!cancelled) setCount(total ?? initialCount)
+    const load = async () => {
+      const res = await fetch(`/api/posts/${postId}/comments?countOnly=1`)
+      if (res.ok && !cancelled) {
+        const { count: total } = await res.json()
+        setCount(total ?? initialCount)
+      }
     }
-    fetch()
+    load()
     return () => {
       cancelled = true
     }

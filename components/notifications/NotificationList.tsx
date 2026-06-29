@@ -5,8 +5,10 @@ import Link from "next/link"
 import { Bell, Heart, UserPlus, MessageCircle, FileText, Check, X, AtSign } from "lucide-react"
 
 import type { NotificationType } from "@/lib/types"
-import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+
+/** How often to refresh the list (ms) — replaces the old realtime subscription. */
+const POLL_INTERVAL = 30_000
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -35,9 +37,6 @@ export interface NotificationItem {
   application_id: string | null
   actor: Actor | null
 }
-
-const SELECT =
-  "id, type, read, created_at, post_id, project_id, application_id, actor:profiles!actor_id ( id, username, full_name, avatar_url )"
 
 function describe(type: NotificationType): string {
   switch (type) {
@@ -97,53 +96,37 @@ export function NotificationList({
   initial: NotificationItem[]
   userId: string
 }) {
-  const [supabase] = React.useState(() => createClient())
   const [items, setItems] = React.useState<NotificationItem[]>(initial)
 
   const refetch = React.useCallback(async () => {
-    const { data } = await supabase
-      .from("notifications")
-      .select(SELECT)
-      .eq("recipient_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(50)
-    if (data) setItems(data as unknown as NotificationItem[])
-  }, [supabase, userId])
-
-  // Realtime: any change to this user's notifications refreshes the list.
-  React.useEffect(() => {
-    const channel = supabase
-      .channel(`notif-list-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `recipient_id=eq.${userId}`,
-        },
-        () => refetch()
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
+    const res = await fetch("/api/notifications")
+    if (res.ok) {
+      const { notifications } = await res.json()
+      setItems(notifications as NotificationItem[])
     }
-  }, [supabase, userId, refetch])
+  }, [])
+
+  // Poll for updates (replaces the old realtime subscription) + on focus.
+  React.useEffect(() => {
+    const timer = setInterval(refetch, POLL_INTERVAL)
+    const onFocus = () => refetch()
+    window.addEventListener("focus", onFocus)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener("focus", onFocus)
+    }
+  }, [refetch])
 
   const unreadCount = items.filter((i) => !i.read).length
 
   const markAllRead = async () => {
     setItems((list) => list.map((i) => ({ ...i, read: true })))
-    await supabase
-      .from("notifications")
-      .update({ read: true })
-      .eq("recipient_id", userId)
-      .eq("read", false)
+    await fetch("/api/notifications", { method: "PATCH" })
   }
 
   const markRead = async (id: string) => {
     setItems((list) => list.map((i) => (i.id === id ? { ...i, read: true } : i)))
-    await supabase.from("notifications").update({ read: true }).eq("id", id)
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" })
   }
 
   if (items.length === 0) {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Image as ImageIcon, Video, LayoutList, CalendarDays, X, FileText } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +33,6 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
   const [attachedMedia, setAttachedMedia] = useState<MediaAttachment[]>([])
   const [attachedDoc, setAttachedDoc] = useState<{ file: File } | null>(null)
 
-  const [supabase] = useState(() => createClient())
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const docInputRef = useRef<HTMLInputElement>(null)
@@ -98,48 +96,46 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
 
     const media: { url: string; type: "image" | "video" }[] = []
 
-    for (let i = 0; i < attachedMedia.length; i++) {
-      const m = attachedMedia[i]
-      const ext = m.file.name.split(".").pop()
-      const path =
-        m.type === "video"
-          ? `videos/${userId}/${Date.now()}-${i}.${ext}`
-          : `${userId}/${Date.now()}-${i}.${ext}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("post-media")
-        .upload(path, m.file, { upsert: true })
-      if (uploadError) {
-        setError(`Upload failed: ${uploadError.message}`)
-        setLoading(false)
-        return
+    const uploadFile = async (file: File, kind: "image" | "video" | "doc") => {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("bucket", "post-media")
+      fd.append("kind", kind)
+      const res = await fetch("/api/uploads", { method: "POST", body: fd })
+      if (!res.ok) {
+        const { error: msg } = await res.json().catch(() => ({ error: "upload failed" }))
+        throw new Error(msg)
       }
-      const url = supabase.storage.from("post-media").getPublicUrl(uploadData.path).data.publicUrl
-      media.push({ url, type: m.type })
+      const { url } = await res.json()
+      return url as string
     }
 
-    if (attachedDoc) {
-      const ext = attachedDoc.file.name.split(".").pop()
-      const { error: docError } = await supabase.storage
-        .from("post-media")
-        .upload(`docs/${userId}/${Date.now()}.${ext}`, attachedDoc.file, { upsert: true })
-      if (docError) {
-        setError(`Document upload failed: ${docError.message}`)
-        setLoading(false)
-        return
+    try {
+      for (const m of attachedMedia) {
+        const url = await uploadFile(m.file, m.type)
+        media.push({ url, type: m.type })
       }
+      if (attachedDoc) {
+        await uploadFile(attachedDoc.file, "doc")
+      }
+    } catch (err) {
+      setError(`Upload failed: ${err instanceof Error ? err.message : "unknown error"}`)
+      setLoading(false)
+      return
     }
 
-    const { error: insertError } = await supabase
-      .from("post")
-      .insert({
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         content: content.trim(),
-        author_id: userId,
-        category: "Announcement",
         ...(media.length > 0 && { media }),
-      })
+      }),
+    })
 
-    if (insertError) {
-      setError(insertError.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Post failed" }))
+      setError(msg ?? "Post failed")
     } else {
       setContent("")
       clearAttachments()

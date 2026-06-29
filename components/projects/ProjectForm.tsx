@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import type { Project } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,7 +41,6 @@ export function ProjectForm({
   project,
 }: ProjectFormProps) {
   const router = useRouter()
-  const [supabase] = React.useState(() => createClient())
   const isEdit = Boolean(project)
 
   const [title, setTitle] = React.useState(project?.title ?? "")
@@ -94,14 +92,23 @@ export function ProjectForm({
       status,
     }
 
-    const { error: dbError } = isEdit
-      ? await supabase.from("project").update(payload).eq("id", project!.id)
-      : await supabase.from("project").insert({ ...payload, professor_id: professorId })
+    const res = isEdit
+      ? await fetch(`/api/projects/${project!.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      : await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
 
     setSubmitting(false)
 
-    if (dbError) {
-      setError(dbError.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Save failed" }))
+      setError(msg ?? "Save failed")
       return
     }
 

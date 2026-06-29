@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import type { Profile } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +18,6 @@ import {
 
 export function ProfileSettingsForm({ profile }: { profile: Profile }) {
   const router = useRouter()
-  const [supabase] = React.useState(() => createClient())
 
   const [fullName, setFullName] = React.useState(profile.full_name ?? "")
   const [bio, setBio] = React.useState(profile.bio ?? "")
@@ -54,25 +52,25 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
     let nextAvatarUrl = avatarUrl
 
     if (avatarFile) {
-      const ext = avatarFile.name.split(".").pop() || "png"
-      const path = `${profile.id}/avatar-${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, avatarFile, { upsert: true })
-      if (uploadError) {
+      const fd = new FormData()
+      fd.append("file", avatarFile)
+      fd.append("bucket", "avatars")
+      fd.append("kind", "avatar")
+      const uploadRes = await fetch("/api/uploads", { method: "POST", body: fd })
+      if (!uploadRes.ok) {
         setSaving(false)
-        setError(`Avatar upload failed: ${uploadError.message}`)
+        const { error: msg } = await uploadRes.json().catch(() => ({ error: "upload failed" }))
+        setError(`Avatar upload failed: ${msg}`)
         return
       }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(path)
-      nextAvatarUrl = publicUrl
+      const { url } = await uploadRes.json()
+      nextAvatarUrl = url
     }
 
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         full_name: fullName.trim() || null,
         bio: bio.trim() || null,
         branch: branch.trim() || null,
@@ -82,13 +80,14 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
           .map((s) => s.trim())
           .filter(Boolean),
         avatar_url: nextAvatarUrl || null,
-      })
-      .eq("id", profile.id)
+      }),
+    })
 
     setSaving(false)
 
-    if (dbError) {
-      setError(dbError.message)
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Update failed" }))
+      setError(msg ?? "Update failed")
       return
     }
 

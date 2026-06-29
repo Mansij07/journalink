@@ -1,64 +1,46 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import { PostCard } from "./PostCard"
 import { CommentInput } from "./CommentInput"
 import { CommentCard } from "./CommentCard"
+import { PostSkeleton } from "./PostSkeleton"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface PostFullViewProps {
   postId: string
   userId: string
-  role: string
-  onBack: () => void
+  /** Optional: in-feed callback. On the standalone page this is omitted and we use the router. */
+  onBack?: () => void
 }
 
-export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps) {
+export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
+  const router = useRouter()
   const [post, setPost] = useState<any>(null)
   const [comments, setComments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [commentsError, setCommentsError] = useState(false)
-  const supabase = createClient()
+
+  const goBack =
+    onBack ?? (() => (window.history.length > 1 ? router.back() : router.push("/feed")))
 
   const fetchPostAndComments = async () => {
     setLoading(true)
     setCommentsError(false)
 
-    const { data: postData } = await supabase
-      .from("post")
-      .select("*")
-      .eq("id", postId)
-      .single()
-
-    if (postData) {
-      const { data: authorProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", postData.author_id)
-        .single()
-      setPost({ ...postData, profiles: authorProfile ?? null })
+    const postRes = await fetch(`/api/posts/${postId}`)
+    if (postRes.ok) {
+      setPost(await postRes.json())
     }
 
-    const { data: commentsData, error: commError } = await supabase
-      .from("comments")
-      .select("*")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true })
-
-    if (commError) {
+    const commentsRes = await fetch(`/api/posts/${postId}/comments`)
+    if (!commentsRes.ok) {
       setCommentsError(true)
-    } else if (commentsData && commentsData.length > 0) {
-      const commentAuthorIds = [...new Set(commentsData.map((c) => c.author_id))]
-      const { data: commentProfiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", commentAuthorIds)
-      const profileMap = new Map((commentProfiles ?? []).map((p) => [p.id, p]))
-      setComments(commentsData.map((c) => ({ ...c, profiles: profileMap.get(c.author_id) ?? null })))
     } else {
-      setComments([])
+      const { comments: commentsData } = await commentsRes.json()
+      setComments(commentsData ?? [])
     }
 
     setLoading(false)
@@ -69,7 +51,25 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
   }, [postId])
 
   if (loading) {
-    return <div className="text-muted-foreground text-[15px] text-center py-8">Loading...</div>
+    return (
+      <div className="flex flex-col gap-4 pb-20">
+        {/* Sticky back bar — usable while the post loads */}
+        <div className="-mx-px flex items-center gap-4 border-b border-border bg-background px-1 py-3 sticky top-16 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goBack}
+            className="rounded-full"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="size-5" />
+          </Button>
+          <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground">Post</h2>
+        </div>
+
+        <PostSkeleton />
+      </div>
+    )
   }
 
   if (!post) {
@@ -79,7 +79,7 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
           <Button
             variant="ghost"
             size="icon"
-            onClick={onBack}
+            onClick={goBack}
             className="rounded-full"
             aria-label="Go back"
           >
@@ -99,7 +99,7 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
         <Button
           variant="ghost"
           size="icon"
-          onClick={onBack}
+          onClick={goBack}
           className="rounded-full"
           aria-label="Go back"
         >
@@ -109,7 +109,7 @@ export function PostFullView({ postId, userId, role, onBack }: PostFullViewProps
       </div>
 
       {/* Post — same card structure as the feed */}
-      <PostCard post={post} userId={userId} />
+      <PostCard post={post} userId={userId} isFullView />
 
       {/* Replies, grouped in a matching card */}
       <div className="overflow-hidden rounded-xl border border-border bg-card">

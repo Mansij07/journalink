@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -39,7 +38,6 @@ export function ApplyDialog({
   onApplied,
 }: ApplyDialogProps) {
   const router = useRouter()
-  const [supabase] = React.useState(() => createClient())
   const [message, setMessage] = React.useState("")
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -56,22 +54,17 @@ export function ApplyDialog({
     setSubmitting(true)
     setError(null)
 
-    const { error: dbError } = await supabase.from("applications").insert({
-      project_id: projectId,
-      applicant_id: applicantId,
-      message: message.trim() || null,
-      status: "pending",
+    const res = await fetch("/api/applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, message: message.trim() || null }),
     })
 
     setSubmitting(false)
 
-    if (dbError) {
-      // 23505 = unique_violation: already applied.
-      setError(
-        dbError.code === "23505"
-          ? "You have already applied to this project."
-          : dbError.message
-      )
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Submit failed" }))
+      setError(msg ?? "Submit failed")
       return
     }
 

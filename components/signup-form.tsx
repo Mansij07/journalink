@@ -51,13 +51,14 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
     }
 
     if (data.user) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ username, role })
-        .eq("id", data.user.id)
-
-      if (profileError) {
-        setError(profileError.message)
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, role }),
+      })
+      if (!res.ok) {
+        const { error: msg } = await res.json().catch(() => ({ error: "Setup failed" }))
+        setError(msg ?? "Setup failed")
         setLoading(false)
         return
       }

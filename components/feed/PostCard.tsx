@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Share2, BarChart2, BadgeCheck } from "lucide-react"
 import { LikeButton } from "./LikeButton"
 import { CommentButton } from "./CommentButton"
@@ -22,6 +23,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, userId = "", onPostClick, isFullView = false }: PostCardProps) {
+  const router = useRouter()
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
   const mediaItems: MediaItem[] = Array.isArray(post.media) && post.media.length > 0
@@ -38,8 +40,10 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
   const avatarUrl = profile?.avatar_url || null
   const initial = (displayName.charAt(0) || username.charAt(0) || "U").toUpperCase()
 
-  const handleClick = () => {
+  // Open the post: use the in-feed callback if given, otherwise navigate to its page.
+  const goToPost = () => {
     if (onPostClick) onPostClick(post.id)
+    else if (!isFullView) router.push(`/posts/${post.id}`)
   }
 
   const handleShare = (e: React.MouseEvent) => {
@@ -59,10 +63,10 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
           isFullView
             ? "px-5 pt-4 pb-3 border-b border-border"
             : "mb-4 p-5 rounded-xl border border-border bg-card",
-          !isFullView && onPostClick && "hover:bg-accent/50 cursor-pointer",
+          !isFullView && "hover:bg-accent/50 cursor-pointer",
           isFullView && onPostClick && "hover:bg-accent/30 cursor-pointer"
         )}
-        onClick={handleClick}
+        onClick={goToPost}
         aria-label={`Post by ${displayName}`}
       >
         <div className="flex-shrink-0 pt-0.5">
@@ -113,7 +117,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
             <CommentButton
               postId={post.id}
               initialCount={post.commentCount || 0}
-              onClick={() => onPostClick?.(post.id)}
+              onClick={goToPost}
             />
 
             <RepostButton postId={post.id} userId={userId} initialCount={post.repostCount || 0} />

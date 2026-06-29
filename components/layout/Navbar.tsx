@@ -42,22 +42,16 @@ export default function Navbar() {
   React.useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url")
-        .eq("id", user.id)
-        .single()
+      const res = await fetch("/api/profile")
+      if (!res.ok || cancelled) return
+      const data = await res.json()
       if (!cancelled && data) setProfile(data as NavProfile)
     }
     load()
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
 
   const signOut = async () => {
     await supabase.auth.signOut()

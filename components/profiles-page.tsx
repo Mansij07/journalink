@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Search } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -23,7 +22,6 @@ export function ProfileClient() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,17 +43,12 @@ export function ProfileClient() {
         return
       }
 
-      const [{ data: profileData }, { data: projectData }] = await Promise.all([
-        supabase.from("profiles").select("id, username, role").ilike("username", `%${search}%`).limit(5),
-        supabase
-          .from("project")
-          .select("id, title, type, status, professor_id, profiles!professor_id(username)")
-          .ilike("title", `%${search}%`)
-          .limit(5),
-      ])
-
-      if (profileData) setProfiles(profileData)
-      if (projectData) setProjects(projectData)
+      const res = await fetch(`/api/search?q=${encodeURIComponent(search)}`)
+      if (res.ok) {
+        const { profiles: profileData, projects: projectData } = await res.json()
+        setProfiles(profileData ?? [])
+        setProjects(projectData ?? [])
+      }
       setOpen(true)
     }, 300)
 
