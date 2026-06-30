@@ -5,6 +5,7 @@ import type { Profile } from "@/lib/types"
 import { cacheGetOrSet, cacheDelete } from "@/lib/redis"
 
 /** How long a cached profile row lives before being re-fetched (seconds). */
+
 const PROFILE_TTL = 60 * 60 // 1 hour — profiles change rarely.
 
 const profileIdKey = (id: string) => `profile:id:${id}`
@@ -18,7 +19,7 @@ const profileUsernameKey = (username: string) => `profile:username:${username}`
  * the request-scoped Supabase client so RLS context is preserved on a miss.
  */
 export async function getProfileById(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient,     //RLS context is preserved on a miss
   id: string
 ): Promise<Profile | null> {
   return cacheGetOrSet(profileIdKey(id), PROFILE_TTL, async () => {
@@ -44,7 +45,7 @@ export async function getProfileByUsername(
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .eq("username", username)
+      .eq("username", username)   
       .maybeSingle()
     const profile = (data as Profile | null) ?? null
     if (profile) {
@@ -61,11 +62,11 @@ export async function getProfileByUsername(
  */
 export async function invalidateProfile(
   id: string,
-  username?: string | null
-): Promise<void> {
+  username?: string | null   // ? makes the parameter optional
+): Promise<void> {           // promise that resolves to nothing, only for deleting cache
   await cacheDelete(
     profileIdKey(id),
-    ...(username ? [profileUsernameKey(username)] : [])
+    ...(username ? [profileUsernameKey(username)] : [])      
   )
 }
 

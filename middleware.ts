@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     // Not logged in → only allow login, signup, auth routes
-    if (!path.startsWith('/login') && !path.startsWith('/signup') && !path.startsWith('/auth')) {
+    if (!path.startsWith('/login') && !path.startsWith('/signup') && !path.startsWith('/auth') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password')) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return response
@@ -67,6 +67,6 @@ export const config = {
     '/posts/:path*',
     '/login',
     '/signup',
-    '/onboarding',
+    '/onboarding'
   ]
 }

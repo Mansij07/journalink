@@ -44,7 +44,7 @@ export async function cacheGetOrSet<T>(
     try {
       await redis.set(key, JSON.stringify(fresh), "EX", ttlSeconds)
     } catch {
-      // Cache write failed — ignore, the value is already loaded.
+      // Cache write failed — ignore, the value is already loaded. 
     }
   }
 

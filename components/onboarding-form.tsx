@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function OnboardingForm() {
   const [username, setUsername] = useState("")
@@ -62,22 +62,16 @@ export default function OnboardingForm() {
             />
           </Field>
           <Field>
-            <FieldLabel>I am a...</FieldLabel>
-            <ToggleGroup
-              type="single"
-              value={role}
-              onValueChange={(v) => v && setRole(v as "Student" | "Prof")}
-              spacing={0}
-              className="w-full"
-              variant="outline"
-            >
-              <ToggleGroupItem value="Student" className="flex-1">
-                Student
-              </ToggleGroupItem>
-              <ToggleGroupItem value="Prof" className="flex-1">
-                Professor
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <FieldLabel htmlFor="role">I am a...</FieldLabel>
+            <Select value={role} onValueChange={(v) => setRole(v as "Student" | "Prof")}>
+              <SelectTrigger id="role" className="w-full">
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Student">Student</SelectItem>
+                <SelectItem value="Prof">Professor</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Field>

@@ -7,6 +7,7 @@ import type { Project } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Field,
   FieldLabel,
@@ -212,11 +213,11 @@ export function ProjectForm({
               </Field>
               <Field>
                 <FieldLabel htmlFor="project-deadline">Deadline</FieldLabel>
-                <Input
+                <DatePicker
                   id="project-deadline"
-                  type="date"
                   value={deadline ?? ""}
-                  onChange={(e) => setDeadline(e.target.value)}
+                  onChange={setDeadline}
+                  placeholder="Pick a date"
                 />
               </Field>
             </Field>

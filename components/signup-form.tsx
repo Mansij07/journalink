@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
   const supabase = createClient()
@@ -111,22 +112,16 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
                 />
               </Field>
               <Field>
-                <FieldLabel>Role</FieldLabel>
-                <ToggleGroup
-                  type="single"
-                  value={role}
-                  onValueChange={(v) => v && setRole(v as "Student" | "Prof")}
-                  spacing={0}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <ToggleGroupItem value="Student" className="flex-1">
-                    Student
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="Prof" className="flex-1">
-                    Professor
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                <FieldLabel htmlFor="role">Role</FieldLabel>
+                <Select value={role} onValueChange={(v) => setRole(v as "Student" | "Prof")}>
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Prof">Professor</SelectItem>
+                  </SelectContent>
+                </Select>
               </Field>
               {error && <p className="text-sm text-destructive">{error}</p>}
               {message && <p className="text-sm text-green-500">{message}</p>}
@@ -136,9 +131,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
-                  <a href="/login" className="underline underline-offset-4">
+                  <Link href="/login" className="underline underline-offset-4">
                     Login
-                  </a>
+                  </Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>

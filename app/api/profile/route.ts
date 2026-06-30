@@ -44,15 +44,12 @@ export async function PATCH(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-
   let body: Record<string, unknown>
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
-
-  // Only forward whitelisted fields that were actually provided.
   const updates: Record<string, unknown> = {}
   for (const key of ALLOWED_FIELDS) {
     if (key in body) updates[key] = body[key]
@@ -60,19 +57,15 @@ export async function PATCH(request: Request) {
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
   }
-
   const { data, error } = await supabase
     .from("profiles")
     .update(updates)
     .eq("id", user.id)
     .select("*")
     .single()
-
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
-
   await invalidateProfile(user.id, data?.username ?? null)
-
   return NextResponse.json(data)
 }

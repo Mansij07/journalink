@@ -5,7 +5,7 @@ import Navbar from "@/components/layout/Navbar"
 
 export function ConditionalNavbar() {
   const pathname = usePathname()
-  const hideNavbarRoutes = ["/login", "/signup", "/onboarding"]
+  const hideNavbarRoutes = ["/login", "/signup", "/onboarding", "/forgot-password", "/reset-password"]
 
   if (hideNavbarRoutes.includes(pathname)) return null
 

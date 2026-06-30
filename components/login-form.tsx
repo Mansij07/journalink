@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -77,9 +78,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a href="/forgot-password" className="ml-auto text-sm underline-offset-4 hover:underline">
+                  <Link href="/forgot-password" className="ml-auto text-sm underline-offset-4 hover:underline">
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="password"
@@ -95,7 +96,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                   {loading ? "Logging in..." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="/signup">Sign up</a>
+                  Don&apos;t have an account? <Link href="/signup">Sign up</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>
