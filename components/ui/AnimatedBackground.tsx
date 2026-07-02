@@ -7,7 +7,7 @@ const AnimatedBackground = memo(function AnimatedBackground() {
     <div className="absolute inset-0 z-0">
       {/* @ts-ignore */}
       <FaultyTerminal
-        tint="#FFD700"
+        tint="#50C878"
         brightness={0.4}
         scale={1.5}
         curvature={0.07}

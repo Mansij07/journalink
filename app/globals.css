@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-error: var(--error);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -55,13 +56,14 @@
   badges 26px, pills 9999px. No chromatic accent anywhere.
 */
 :root {
+  --error: #dc2626;
   --background: #ffffff; /* chalk canvas */
   --foreground: #0a0a0a; /* graphite ink */
   --card: #ffffff;
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a; /* the single filled-black CTA */
+  --primary: #008080; /* the single filled-black CTA */
   --primary-foreground: #ffffff;
   --secondary: #f2f2f2; /* mist surface */
   --secondary-foreground: #0a0a0a;
@@ -95,13 +97,14 @@
   Borders are a hair above the canvas so structure still reads. Achromatic.
 */
 .dark {
+  --error: #f87171;
   --background: #0a0a0a;
   --foreground: #fafafa;
   --card: #171717;
   --card-foreground: #fafafa;
   --popover: #171717;
   --popover-foreground: #fafafa;
-  --primary: #fafafa; /* inverted: light fill on dark canvas is the CTA */
+  --primary: #50C878 ; /* inverted: light fill on dark canvas is the CTA */
   --primary-foreground: #0a0a0a;
   --secondary: #1f1f1f;
   --secondary-foreground: #fafafa;
