@@ -111,7 +111,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               </Field>
               {error && <p className="text-sm text-error">{error}</p>}
               <Field>
-                <Button type="submit" disabled={loading} className="text-base">
+                <Button type="submit" disabled={loading} className="text-white">
                   {loading ? "Logging in..." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">

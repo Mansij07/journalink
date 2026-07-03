@@ -53,16 +53,15 @@ export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonP
       asChild
       className={cn(
         "rounded-full transition-colors",
-        // Light mode: green accent. Dark mode stays monochrome.
         reposted
-          ? "text-emerald-600 dark:text-foreground"
+          ? "text-emerald-600 dark:text-emerald-600"
           : "text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:bg-muted dark:hover:text-foreground"
       )}
       aria-label={reposted ? "Undo repost" : "Repost"}
     >
       <motion.button whileTap={{ scale: 0.85 }} onClick={toggle}>
         <Repeat2 className="size-[18px]" />
-        {count > 0 && <span className="ml-1 text-[13px]">{count}</span>}
+        {count > 0 && <span className="ml-1 text-[13px] text-muted-foreground">{count}</span>}
       </motion.button>
     </Button>
   )

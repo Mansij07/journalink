@@ -100,12 +100,12 @@
   --error: #f87171;
   --background: #0a0a0a;
   --foreground: #fafafa;
-  --card: #171717;
+  --card: #1A1D20;
   --card-foreground: #fafafa;
-  --popover: #171717;
+  --popover: #1A1D20;
   --popover-foreground: #fafafa;
-  --primary: #50C878 ; /* inverted: light fill on dark canvas is the CTA */
-  --primary-foreground: #0a0a0a;
+  --primary: #055C3F; /* inverted: light fill on dark canvas is the CTA */
+  --primary-foreground: #fafafa;
   --secondary: #1f1f1f;
   --secondary-foreground: #fafafa;
   --muted: #1f1f1f;

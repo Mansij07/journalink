@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Share2, BarChart2, BadgeCheck } from "lucide-react"
+import { Share2, BadgeCheck } from "lucide-react"
 import { LikeButton } from "./LikeButton"
 import { CommentButton } from "./CommentButton"
 import { RepostButton } from "./RepostButton"
@@ -123,15 +123,6 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
             <RepostButton postId={post.id} userId={userId} initialCount={post.repostCount || 0} />
 
             <LikeButton postId={post.id} userId={userId} initialCount={post.likeCount || 0} />
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Views"
-            >
-              <BarChart2 className="size-[18px]" />
-            </Button>
 
             <BookmarkButton postId={post.id} userId={userId} />
 

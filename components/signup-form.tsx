@@ -126,7 +126,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
               {error && <p className="text-sm text-destructive">{error}</p>}
               {message && <p className="text-sm text-green-500">{message}</p>}
               <Field>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="text-white">
                   {loading ? "Creating account..." : "Sign up"}
                 </Button>
                 <FieldDescription className="text-center">
