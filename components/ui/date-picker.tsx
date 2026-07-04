@@ -34,7 +34,10 @@ export function DatePicker({
   placeholder = "Pick a date",
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
-  const selected = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined
+  // Tolerate a full timestamp ("2026-07-04T00:00:00+00:00") by using only the
+  // leading date portion; parse() would otherwise return an Invalid Date.
+  const parsed = value ? parse(value.slice(0, 10), "yyyy-MM-dd", new Date()) : undefined
+  const selected = parsed && !isNaN(parsed.getTime()) ? parsed : undefined
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>

@@ -52,7 +52,7 @@ export function CommentInput({ postId, userId, onCommentAdded }: CommentInputPro
           rows={3}
           className="w-full bg-transparent resize-none text-[15px] placeholder:text-muted-foreground focus-visible:ring-0 leading-relaxed border-none shadow-none p-0"
         />
-        {error && <p className="text-[13px] text-destructive">{error}</p>}
+        {error && <p className="text-[13px] text-error">{error}</p>}
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}

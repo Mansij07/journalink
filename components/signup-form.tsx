@@ -123,7 +123,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
                   </SelectContent>
                 </Select>
               </Field>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-error">{error}</p>}
               {message && <p className="text-sm text-green-500">{message}</p>}
               <Field>
                 <Button type="submit" disabled={loading} className="text-white">

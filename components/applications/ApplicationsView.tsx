@@ -71,18 +71,17 @@ export function ApplicationsView({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-[820px] px-6 py-12">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground">
+          <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
             {isProf ? "Applications" : "My Applications"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-md text-muted-foreground">
             {isProf
-              ? "Review applications from students interested in your projects."
-              : "Track the status of projects you've applied to."}
+              ? "Review applications from students interested in your projects"
+              : "Track the status of projects you've applied to"}
           </p>
         </div>
-
         {isEmpty ? (
           <div className="flex items-center justify-center py-24">
             <Empty className="max-w-md">
@@ -93,8 +92,8 @@ export function ApplicationsView({
                 <EmptyTitle>No applications yet</EmptyTitle>
                 <EmptyDescription>
                   {isProf
-                    ? "Once students apply to your projects, their applications will appear here. Make sure your projects are open for applications."
-                    : "You haven't applied to any research projects yet. Browse available projects and submit your first application."}
+                    ? "Once students apply to your projects, their applications will appear here. Make sure your projects are open for applications"
+                    : "You haven't applied to any research projects yet. Browse available projects and submit your first application"}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -199,7 +198,7 @@ function StudentList({
           <span className="text-xs text-muted-foreground">Accept limit reached for your year</span>
         )}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
 
       <div ref={ref} className="flex flex-col gap-3">
         {items.map((app) => {

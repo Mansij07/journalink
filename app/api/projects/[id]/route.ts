@@ -41,16 +41,25 @@ export async function PATCH(
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
   }
 
-  // Ownership is enforced both here (professor_id) and by RLS.
+  // Ownership is enforced both here (professor_id) and by RLS. maybeSingle()
+  // returns null (rather than throwing "cannot coerce…") when no row matches —
+  // e.g. the project doesn't exist, isn't owned by the user, or an RLS UPDATE
+  // policy blocked the write.
   const { data, error } = await supabase
     .from("project")
     .update(updates)
     .eq("id", id)
     .eq("professor_id", user.id)
     .select("id")
-    .single()
+    .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data) {
+    return NextResponse.json(
+      { error: "Project not found or you don't have permission to edit it." },
+      { status: 404 }
+    )
+  }
 
   await invalidateProjects(user.id, id)
   return NextResponse.json(data)

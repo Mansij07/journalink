@@ -33,12 +33,12 @@ export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProp
       <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground">
+            <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
               {isProf ? "My Projects" : "Research Projects"}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-md text-muted-foreground">
               {isProf
-                ? "Manage your research projects and review student applications."
+                ? "Manage your research projects and review student applications"
                 : "Find research opportunities and apply to collaborate."}
             </p>
           </div>

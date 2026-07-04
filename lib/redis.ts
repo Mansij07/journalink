@@ -15,7 +15,21 @@ export const redis =
     // caller can fall back to the database.
     maxRetriesPerRequest: 2,
     enableOfflineQueue: false,
+    // Cap reconnect attempts instead of retrying forever when Redis is down
+    // (e.g. not running locally in dev).
+    retryStrategy: (times) => (times > 10 ? null : Math.min(times * 200, 2000)),
   })
+
+// ioredis throws an unhandled error if no "error" listener is registered.
+// All call sites already catch failures and fall back to the database, so
+// just log here instead of letting the process crash.
+if (!globalForRedis.redis) {
+  redis.on("error", (err) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[redis] connection error:", err.message)
+    }
+  })
+}
 
 if (process.env.NODE_ENV !== "production") globalForRedis.redis = redis
 

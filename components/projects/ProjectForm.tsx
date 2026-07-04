@@ -119,7 +119,7 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit project" : "Create project"}</DialogTitle>
           <DialogDescription>
@@ -129,8 +129,12 @@ export function ProjectForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} id="project-form">
-          <FieldGroup>
+        <form
+          onSubmit={handleSubmit}
+          id="project-form"
+          className="-mx-2 min-h-0 flex-1 overflow-y-auto px-2 py-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]"
+        >
+          <FieldGroup className="gap-3">
             <Field>
               <FieldLabel htmlFor="project-title">Title</FieldLabel>
               <Input
@@ -174,6 +178,7 @@ export function ProjectForm({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What is the project about?"
                 rows={4}
+                className="field-sizing-fixed h-20 resize-none overflow-y-auto"
               />
             </Field>
 
@@ -185,6 +190,7 @@ export function ProjectForm({
                 onChange={(e) => setRequirements(e.target.value)}
                 placeholder="Prerequisites, expected commitment, etc."
                 rows={3}
+                className="field-sizing-fixed h-16 resize-none overflow-y-auto"
               />
             </Field>
 

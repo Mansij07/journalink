@@ -73,7 +73,7 @@ export default function OnboardingForm() {
               </SelectContent>
             </Select>
           </Field>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-error">{error}</p>}
           <Field>
             <Button onClick={handleSubmit} disabled={loading || !username}>
               {loading ? "Saving..." : "Get started"}

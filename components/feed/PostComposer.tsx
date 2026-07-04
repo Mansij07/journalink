@@ -209,7 +209,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             </div>
           )}
 
-          {error && <p className="text-[13px] text-destructive mt-1">{error}</p>}
+          {error && <p className="text-[13px] text-error mt-1">{error}</p>}
         </div>
       </div>
 
@@ -268,7 +268,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
               className={cn(
                 "text-[13px] tabular-nums",
                 overLimit
-                  ? "text-destructive font-bold"
+                  ? "text-error font-bold"
                   : remaining < 50
                   ? "text-yellow-500"
                   : "text-muted-foreground"

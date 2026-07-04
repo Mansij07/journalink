@@ -58,7 +58,7 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-[820px] px-6 py-10">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <Link
           href="/projects"
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -73,12 +73,12 @@ export default async function ProjectDetailPage({
               {typed.type}
             </Badge>
           )}
-          <Badge variant={isOpen ? "default" : "secondary"} className="font-normal">
+          <Badge variant={isOpen ? "success" : "error"} className="font-normal">
             {typed.status}
           </Badge>
         </div>
 
-        <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-[-0.025em] text-foreground">
+        <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-[-0.025em] text-foreground">
           {typed.title}
         </h1>
 
@@ -136,7 +136,7 @@ export default async function ProjectDetailPage({
 
         {typed.description && (
           <section className="mb-8">
-            <h2 className="mb-2 text-sm font-semibold tracking-[-0.01em] text-foreground">
+            <h2 className="mb-2 text-xl font-semibold tracking-[-0.01em] text-foreground">
               About this project
             </h2>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
@@ -147,7 +147,7 @@ export default async function ProjectDetailPage({
 
         {typed.requirements && (
           <section className="mb-8">
-            <h2 className="mb-2 text-sm font-semibold tracking-[-0.01em] text-foreground">
+            <h2 className="mb-2 text-xl font-semibold tracking-[-0.01em] text-foreground">
               Requirements
             </h2>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
@@ -158,7 +158,7 @@ export default async function ProjectDetailPage({
 
         {typed.skills && typed.skills.length > 0 && (
           <section className="mb-8">
-            <h2 className="mb-2 text-sm font-semibold tracking-[-0.01em] text-foreground">
+            <h2 className="mb-2 text-xl font-semibold tracking-[-0.01em] text-foreground">
               Skills
             </h2>
             <div className="flex flex-wrap gap-1.5">
