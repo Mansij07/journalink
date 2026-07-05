@@ -62,7 +62,7 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
       <motion.button whileTap={{ scale: 0.85 }} onClick={toggleLike}>
         <Heart
           className={cn(
-            "size-[18px]",
+            "size-[20px]",
             liked && "fill-red-600 dark:fill-red-600"
           )}
         />

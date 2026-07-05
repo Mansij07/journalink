@@ -4,9 +4,49 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { ProjectWithProfessor } from "@/lib/types"
 import { cacheGetOrSet, cacheDelete } from "@/lib/redis"
 import { invalidateProjectCount } from "@/lib/social"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 const LIST_TTL = 5 * 60 // open/owner lists — a few minutes
 const DETAIL_TTL = 15 * 60 // a single project changes rarely
+
+/** Today's date as "yyyy-MM-dd" (UTC) — matches the DatePicker's stored format. */
+export function todayStr(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/**
+ * A project must be auto-closed when its deadline is strictly before today
+ * (applyable through the deadline day) or it has a defined, non-positive slot
+ * count. Idempotent: callers only ever flip an Open project to Closed.
+ */
+export function shouldAutoClose(
+  deadline: string | null | undefined,
+  slots: number | null | undefined
+): boolean {
+  if (deadline && deadline.slice(0, 10) < todayStr()) return true
+  if (slots != null && slots <= 0) return true
+  return false
+}
+
+/**
+ * Close every Open project whose deadline has passed or whose slots hit 0.
+ * Uses the service-role client because RLS restricts `UPDATE project` to the
+ * owning professor, but this sweep runs on any viewer's read. The `lt`/`lte`
+ * filters never match NULL, so null deadlines / null slots are left Open.
+ */
+export async function closeExpiredProjects(): Promise<void> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("project")
+    .update({ status: "Closed" })
+    .eq("status", "Open")
+    .or(`deadline.lt.${todayStr()},slots.lte.0`)
+    .select("id, professor_id")
+
+  for (const row of (data ?? []) as { id: number; professor_id: string }[]) {
+    await invalidateProjects(row.professor_id, row.id)
+  }
+}
 
 const openProjectsKey = "projects:open"
 const ownerProjectsKey = (profId: string) => `projects:owner:${profId}`
@@ -20,6 +60,7 @@ export async function getOpenProjects(
   supabase: SupabaseClient
 ): Promise<ProjectWithProfessor[]> {
   return cacheGetOrSet(openProjectsKey, LIST_TTL, async () => {
+    await closeExpiredProjects()
     const { data } = await supabase
       .from("project")
       .select(PROJECT_SELECT)
@@ -39,6 +80,7 @@ export async function getOwnerProjects(
     `${ownerProjectsKey(profId)}${openOnly ? ":open" : ""}`,
     LIST_TTL,
     async () => {
+      await closeExpiredProjects()
       let query = supabase
         .from("project")
         .select(PROJECT_SELECT)
@@ -57,6 +99,7 @@ export async function getProjectById(
   id: string | number
 ): Promise<ProjectWithProfessor | null> {
   return cacheGetOrSet(projectKey(id), DETAIL_TTL, async () => {
+    await closeExpiredProjects()
     const { data } = await supabase
       .from("project")
       .select(PROJECT_SELECT)

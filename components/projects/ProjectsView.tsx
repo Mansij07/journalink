@@ -17,6 +17,16 @@ import {
 import { useStaggerReveal } from "@/lib/animations"
 import { ProjectCard } from "@/components/projects/ProjectCard"
 import { ProjectForm } from "@/components/projects/ProjectForm"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+
+const PAGE_SIZE = 9
 
 interface ProjectsViewProps {
   projects: ProjectWithProfessor[]
@@ -26,10 +36,24 @@ interface ProjectsViewProps {
 
 export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProps) {
   const [formOpen, setFormOpen] = React.useState(false)
-  const gridRef = useStaggerReveal<HTMLDivElement>(projects.length)
+  const [page, setPage] = React.useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * PAGE_SIZE
+  const pageProjects = projects.slice(start, start + PAGE_SIZE)
+
+  const gridRef = useStaggerReveal<HTMLDivElement>(currentPage)
+
+  function goToPage(next: number) {
+    setPage(Math.min(totalPages, Math.max(1, next)))
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
@@ -89,14 +113,71 @@ export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProp
             </Empty>
           </div>
         ) : (
-          <div
-            ref={gridRef}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          <>
+            <div
+              ref={gridRef}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {pageProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination className="mt-10">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      aria-disabled={currentPage === 1}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                      onClick={(e) => {
+                        e.preventDefault()
+                        goToPage(currentPage - 1)
+                      }}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (p) => (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          href="#"
+                          isActive={p === currentPage}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            goToPage(p)
+                          }}
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      aria-disabled={currentPage === totalPages}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                      onClick={(e) => {
+                        e.preventDefault()
+                        goToPage(currentPage + 1)
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
         )}
       </div>
 

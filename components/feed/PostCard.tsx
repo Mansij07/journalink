@@ -2,14 +2,15 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Share2, BadgeCheck } from "lucide-react"
+import { Share2, BadgeCheck, CalendarClock } from "lucide-react"
+import { format } from "date-fns"
 import { LikeButton } from "./LikeButton"
 import { CommentButton } from "./CommentButton"
 import { RepostButton } from "./RepostButton"
 import { BookmarkButton } from "./BookmarkButton"
 import { MediaViewer, type MediaItem } from "./MediaViewer"
 import { MediaCollage } from "./MediaCollage"
-import { formatRelativeTime } from "./utils"
+import { RelativeTime } from "./RelativeTime"
 import { renderWithMentions } from "@/lib/mentions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -22,9 +23,21 @@ interface PostCardProps {
   isFullView?: boolean
 }
 
+// Feed posts longer than this are clamped with a "Show more" toggle (x.com-style).
+const CONTENT_LIMIT = 280
+
 export function PostCard({ post, userId = "", onPostClick, isFullView = false }: PostCardProps) {
   const router = useRouter()
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
+  const [expanded, setExpanded] = useState(false)
+
+  const content: string = post.content ?? ""
+  const isLong = content.length > CONTENT_LIMIT
+  // Only the compact feed view truncates; the full post page always shows everything.
+  const showTruncated = !isFullView && isLong && !expanded
+  const displayContent = showTruncated
+    ? content.slice(0, CONTENT_LIMIT).trimEnd()
+    : content
 
   const mediaItems: MediaItem[] = Array.isArray(post.media) && post.media.length > 0
     ? post.media
@@ -32,6 +45,11 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
         ...(post.image_url ? [{ type: "image" as const, url: post.image_url }] : []),
         ...(post.video_url ? [{ type: "video" as const, url: post.video_url }] : []),
       ]
+
+  // Only the author ever receives a scheduled-in-the-future post (enforced server-side),
+  // so show a "Scheduled" marker in place of the live timestamp when one exists.
+  const scheduledAt: string | null = post.scheduled_at ?? null
+  const isScheduled = !!scheduledAt && new Date(scheduledAt).getTime() > Date.now()
 
   const profile = post.profiles
   const displayName = profile?.full_name || profile?.username || "Unknown"
@@ -74,7 +92,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
             {avatarUrl && (
               <AvatarImage src={avatarUrl} alt={username} className="object-cover" />
             )}
-            <AvatarFallback className="bg-muted text-foreground text-sm font-bold">
+            <AvatarFallback className="bg-muted text-foreground text-md font-bold">
               {initial}
             </AvatarFallback>
           </Avatar>
@@ -82,19 +100,27 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
 
         <div className="flex-1 min-w-0 pb-3">
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap min-w-0">
-            <span className="font-bold text-[15px] text-foreground truncate max-w-[160px]">
+            <span className="font-bold text-[18px] text-foreground truncate max-w-[160px]">
               {displayName}
             </span>
             {authorRole === "Prof" && (
               <BadgeCheck className="size-[15px] text-foreground shrink-0" />
             )}
-            <span className="text-[15px] text-muted-foreground shrink-0 hidden sm:inline">
+            <span className="text-[18px] text-muted-foreground shrink-0 hidden sm:inline">
               @{username}
             </span>
             <span className="text-muted-foreground shrink-0">·</span>
-            <span className="text-[15px] text-muted-foreground whitespace-nowrap shrink-0">
-              {formatRelativeTime(post.created_at || new Date().toISOString())}
-            </span>
+            {isScheduled ? (
+              <span className="flex items-center gap-1 text-[18px] text-violet-400 whitespace-nowrap shrink-0">
+                <CalendarClock className="size-[15px]" />
+                {format(new Date(scheduledAt!), "MMM d, h:mm a")}
+              </span>
+            ) : (
+              <RelativeTime
+                dateString={post.created_at || new Date().toISOString()}
+                className="text-[18px] text-muted-foreground whitespace-nowrap shrink-0"
+              />
+            )}
           </div>
 
           <p
@@ -103,7 +129,20 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
               isFullView ? "text-[17px]" : "text-[15px]"
             )}
           >
-            {renderWithMentions(post.content)}
+            {renderWithMentions(displayContent)}
+            {showTruncated && "… "}
+            {!isFullView && isLong && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setExpanded((v) => !v)
+                }}
+                className="font-medium text-primary hover:underline"
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            )}
           </p>
 
           {mediaItems.length > 0 && (
@@ -133,7 +172,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
               className="rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Share"
             >
-              <Share2 className="size-[18px]" />
+              <Share2 className="size-[20px]" />
             </Button>
           </div>
         </div>

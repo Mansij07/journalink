@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AutoLogout } from "@/components/AutoLogout";
 import { ConditionalNavbar } from "@/components/layout/ConditionalNavbar";
+import { ConditionalParticles } from "@/components/layout/ConditionalParticles";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AutoLogout />
+          <ConditionalParticles />
           <ConditionalNavbar />
           {children}
         </ThemeProvider>

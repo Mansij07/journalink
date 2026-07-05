@@ -47,7 +47,7 @@ export function CommentButton({ postId, initialCount = 0, onClick }: CommentButt
           onClick?.()
         }}
       >
-        <MessageCircle className="size-[18px]" />
+        <MessageCircle className="size-[20px]" />
         {count > 0 && <span className="ml-1 text-[13px]">{count}</span>}
       </motion.button>
     </Button>

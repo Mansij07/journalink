@@ -60,7 +60,7 @@ export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonP
       aria-label={reposted ? "Undo repost" : "Repost"}
     >
       <motion.button whileTap={{ scale: 0.85 }} onClick={toggle}>
-        <Repeat2 className="size-[18px]" />
+        <Repeat2 className="size-[20px]" />
         {count > 0 && <span className="ml-1 text-[13px] text-muted-foreground">{count}</span>}
       </motion.button>
     </Button>

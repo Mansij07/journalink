@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { formatRelativeTime } from "./utils"
+import { RelativeTime } from "./RelativeTime"
 import { CommentReactions } from "./CommentReactions"
 import { renderWithMentions } from "@/lib/mentions"
 
@@ -33,9 +33,10 @@ export function CommentCard({ comment, userId = "" }: CommentCardProps) {
             {authorRole === "Prof" ? "Prof" : "Student"}
           </Badge>
           <span className="text-muted-foreground shrink-0">·</span>
-          <span className="text-[15px] text-muted-foreground whitespace-nowrap">
-            {formatRelativeTime(comment.created_at || new Date().toISOString())}
-          </span>
+          <RelativeTime
+            dateString={comment.created_at || new Date().toISOString()}
+            className="text-[15px] text-muted-foreground whitespace-nowrap"
+          />
         </div>
         <p className="text-[15px] text-foreground leading-normal whitespace-pre-wrap break-words">
           {renderWithMentions(comment.content)}

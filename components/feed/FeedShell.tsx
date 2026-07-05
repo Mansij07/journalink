@@ -13,7 +13,7 @@ interface FeedShellProps {
  */
 export function FeedShell({ left, right, children }: FeedShellProps) {
   return (
-    <div className="min-h-screen flex-1 bg-background text-foreground">
+    <div className="min-h-screen flex-1 text-foreground">
       <div className="mx-auto px-5 pt-6 pb-10" style={{ maxWidth: "1600px" }}>
         <div className="flex items-start gap-6">
           <aside

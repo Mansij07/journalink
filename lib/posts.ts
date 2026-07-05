@@ -35,9 +35,11 @@ export async function getFeedPage(
     const from = page * FEED_BATCH_SIZE
     const to = from + FEED_BATCH_SIZE - 1
 
+    // Hide posts scheduled for the future; unscheduled posts have scheduled_at null.
     const { data: postRows, error } = await supabase
       .from("post")
       .select("*")
+      .or(`scheduled_at.is.null,scheduled_at.lte.${new Date().toISOString()}`)
       .order("created_at", { ascending: false })
       .range(from, to)
 

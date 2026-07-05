@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/empty"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { useStaggerReveal } from "@/lib/animations"
-import { formatRelativeTime } from "@/components/feed/utils"
+import { RelativeTime } from "@/components/feed/RelativeTime"
 
 interface MiniProfile {
   id: string
@@ -70,7 +70,7 @@ export function ApplicationsView({
     : studentApplications.length === 0
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
@@ -231,7 +231,7 @@ function StudentList({
                 <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{app.message}</p>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                Applied {formatRelativeTime(app.created_at)} ago
+                Applied <RelativeTime dateString={app.created_at} /> ago
               </p>
 
               {offered && (
@@ -318,7 +318,7 @@ function ProfessorList({ applications }: { applications: ProfessorApplication[] 
                     >
                       {app.project?.title ?? "a project"}
                     </Link>{" "}
-                    · {formatRelativeTime(app.created_at)} ago
+                    · <RelativeTime dateString={app.created_at} /> ago
                   </p>
                 </div>
               </div>

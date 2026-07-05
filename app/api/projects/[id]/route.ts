@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
-import { invalidateProjects } from "@/lib/projects"
+import { invalidateProjects, shouldAutoClose } from "@/lib/projects"
 
 const ALLOWED_FIELDS = [
   "title",
@@ -39,6 +39,19 @@ export async function PATCH(
   }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
+  }
+
+  // When the edit touches deadline/slots, auto-close if the new values are
+  // already past/exhausted — this also prevents manually re-opening an expired
+  // project. A partial edit that omits both is left to the read-time sweep.
+  if (
+    ("deadline" in updates || "slots" in updates) &&
+    shouldAutoClose(
+      updates.deadline as string | null | undefined,
+      updates.slots as number | null | undefined
+    )
+  ) {
+    updates.status = "Closed"
   }
 
   // Ownership is enforced both here (professor_id) and by RLS. maybeSingle()

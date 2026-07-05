@@ -18,7 +18,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { formatRelativeTime } from "@/components/feed/utils"
+import { RelativeTime } from "@/components/feed/RelativeTime"
 
 interface Actor {
   id: string
@@ -190,9 +190,10 @@ export function NotificationList({
                 <span className="text-muted-foreground">{describe(n.type)}</span>
               </p>
 
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {formatRelativeTime(n.created_at)}
-              </span>
+              <RelativeTime
+                dateString={n.created_at}
+                className="shrink-0 text-xs text-muted-foreground"
+              />
               {!n.read && <span className="size-2 shrink-0 rounded-full bg-foreground" />}
             </Link>
           )

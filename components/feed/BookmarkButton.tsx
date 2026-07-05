@@ -56,7 +56,7 @@ export function BookmarkButton({ postId, userId }: BookmarkButtonProps) {
       aria-label={saved ? "Remove bookmark" : "Save"}
     >
       <motion.button whileTap={{ scale: 0.85 }} onClick={toggle}>
-        <Bookmark className={cn("size-[18px]", saved && "fill-foreground")} />
+        <Bookmark className={cn("size-[20px]", saved && "fill-foreground")} />
       </motion.button>
     </Button>
   )

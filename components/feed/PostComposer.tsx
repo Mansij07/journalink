@@ -1,15 +1,23 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Image as ImageIcon, Video, LayoutList, CalendarDays, X, FileText } from "lucide-react"
+import { format } from "date-fns"
+import { Image as ImageIcon, Video, LayoutList, CalendarDays, X, FileText, Clock } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { MentionInput } from "./MentionInput"
-import { cn } from "@/lib/utils"
 
-const MAX_CHARS = 500
 const MAX_MEDIA = 4
 
 interface PostComposerProps {
@@ -33,14 +41,18 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
   const [attachedMedia, setAttachedMedia] = useState<MediaAttachment[]>([])
   const [attachedDoc, setAttachedDoc] = useState<{ file: File } | null>(null)
 
+  const [scheduledAt, setScheduledAt] = useState<Date | null>(null)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [draftDate, setDraftDate] = useState<Date | undefined>(undefined)
+  const [draftTime, setDraftTime] = useState("")
+  const [scheduleError, setScheduleError] = useState<string | null>(null)
+
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const docInputRef = useRef<HTMLInputElement>(null)
 
   const initial = username ? username.charAt(0).toUpperCase() : "P"
-  const remaining = MAX_CHARS - content.length
-  const overLimit = remaining < 0
-  const canPost = content.trim().length > 0 && !overLimit && !loading
+  const canPost = content.trim().length > 0 && !loading
 
   const addMedia = (files: FileList | null, type: "image" | "video") => {
     if (!files) return
@@ -89,8 +101,35 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
     setAttachedDoc(null)
   }
 
+  const openScheduler = () => {
+    setScheduleError(null)
+    setDraftDate(scheduledAt ?? undefined)
+    setDraftTime(scheduledAt ? format(scheduledAt, "HH:mm") : "")
+    setScheduleOpen(true)
+  }
+
+  const confirmSchedule = () => {
+    if (!draftDate || !draftTime) {
+      setScheduleError("Pick a date and time.")
+      return
+    }
+    const [h, m] = draftTime.split(":").map(Number)
+    const when = new Date(draftDate)
+    when.setHours(h, m, 0, 0)
+    if (when.getTime() <= Date.now()) {
+      setScheduleError("Schedule time must be in the future.")
+      return
+    }
+    setScheduledAt(when)
+    setScheduleOpen(false)
+  }
+
   const handleSubmit = async () => {
     if (!canPost) return
+    if (scheduledAt && scheduledAt.getTime() <= Date.now()) {
+      setError("Schedule time must be in the future.")
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -130,6 +169,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
       body: JSON.stringify({
         content: content.trim(),
         ...(media.length > 0 && { media }),
+        ...(scheduledAt && { scheduledAt: scheduledAt.toISOString() }),
       }),
     })
 
@@ -139,6 +179,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
     } else {
       setContent("")
       clearAttachments()
+      setScheduledAt(null)
       onPostCreated()
     }
 
@@ -164,7 +205,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             onChange={setContent}
             currentUserId={userId}
             rows={2}
-            className="w-full bg-transparent resize-none pt-2 text-[18px] placeholder:text-muted-foreground focus-visible:ring-0 leading-relaxed border-none shadow-none p-0"
+            className="w-full bg-transparent resize-none px-2 py-2 text-[18px] placeholder:text-muted-foreground focus-visible:ring-0 leading-relaxed border-none shadow-none"
           />
 
           {(attachedMedia.length > 0 || attachedDoc) && (
@@ -209,6 +250,25 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             </div>
           )}
 
+          {scheduledAt && (
+            <div className="mt-1 mb-2">
+              <Badge
+                variant="secondary"
+                className="flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-normal"
+              >
+                <Clock className="size-3 shrink-0 text-violet-400" />
+                <span>Scheduled for {format(scheduledAt, "MMM d, h:mm a")}</span>
+                <button
+                  onClick={() => setScheduledAt(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Remove schedule"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            </div>
+          )}
+
           {error && <p className="text-[13px] text-error mt-1">{error}</p>}
         </div>
       </div>
@@ -224,7 +284,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             className="rounded-full text-[13px]"
             aria-label="Attach photo"
           >
-            <ImageIcon data-icon="inline-start" />
+            <ImageIcon data-icon="inline-start" className="text-green-400" />
             Photo
           </Button>
 
@@ -235,7 +295,7 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
             className="rounded-full text-[13px]"
             aria-label="Attach video"
           >
-            <Video data-icon="inline-start" />
+            <Video data-icon="inline-start" className="text-blue-400" />
             Video
           </Button>
 
@@ -253,36 +313,22 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
           <Button
             variant="outline"
             size="sm"
-            disabled
+            onClick={openScheduler}
             className="rounded-full text-[13px]"
-            aria-label="Schedule (coming soon)"
+            aria-label="Schedule post"
           >
             <CalendarDays data-icon="inline-start" className="text-violet-400" />
-            Schedule
+            {scheduledAt ? "Edit schedule" : "Schedule"}
           </Button>
         </div>
 
         <div className="flex items-center gap-3">
-          {content.length > 0 && (
-            <span
-              className={cn(
-                "text-[13px] tabular-nums",
-                overLimit
-                  ? "text-error font-bold"
-                  : remaining < 50
-                  ? "text-yellow-500"
-                  : "text-muted-foreground"
-              )}
-            >
-              {remaining}
-            </span>
-          )}
           <Button
             onClick={handleSubmit}
             disabled={!canPost}
             className="rounded-full text-[14px] font-bold"
           >
-            {loading ? "Posting…" : "Post"}
+            {loading ? "Posting…" : scheduledAt ? "Schedule" : "Post"}
           </Button>
         </div>
       </div>
@@ -290,6 +336,52 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
       <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
       <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={handleVideoSelect} />
       <input ref={docInputRef} type="file" accept="application/pdf,.doc,.docx" className="hidden" onChange={handleDocSelect} />
+
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="w-fit">
+          <DialogHeader>
+            <DialogTitle>Schedule post</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center gap-4">
+            <Calendar
+              mode="single"
+              selected={draftDate}
+              onSelect={setDraftDate}
+              disabled={{ before: new Date() }}
+            />
+            <div className="flex w-full items-center gap-2">
+              <Clock className="size-4 shrink-0 text-muted-foreground" />
+              <Input
+                type="time"
+                value={draftTime}
+                onChange={(e) => setDraftTime(e.target.value)}
+                className="w-full"
+                aria-label="Schedule time"
+              />
+            </div>
+            {scheduleError && <p className="w-full text-[13px] text-error">{scheduleError}</p>}
+          </div>
+
+          <DialogFooter>
+            {scheduledAt && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setScheduledAt(null)
+                  setScheduleOpen(false)
+                }}
+                className="rounded-full"
+              >
+                Clear
+              </Button>
+            )}
+            <Button onClick={confirmSchedule} className="rounded-full font-bold">
+              Set time
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

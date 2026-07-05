@@ -65,12 +65,21 @@ export default async function ProfilePage({
       : Promise.resolve({ count: 0 }),
   ])
 
+  // Scheduled-for-the-future posts are only shown on the owner's own profile.
+  const now = Date.now()
+  const visiblePosts = isMe
+    ? postList
+    : postList.filter((post) => {
+        const s = (post as { scheduled_at?: string | null }).scheduled_at
+        return !s || Date.parse(s) <= now
+      })
+
   const displayName = profile.full_name || profile.username || "Unknown"
   const initials = displayName.slice(0, 2).toUpperCase()
   const acceptCap = acceptCapForYear(profile.year)
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto w-full max-w-[680px] px-6 py-10">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -195,13 +204,13 @@ export default async function ProfilePage({
           <h2 className="mb-3 text-sm font-semibold tracking-[-0.01em] text-foreground">
             Posts
           </h2>
-          {postList.length === 0 ? (
+          {visiblePosts.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               No posts yet.
             </p>
           ) : (
-            <StaggerContainer revealKey={postList.length}>
-              {postList.map((post) => (
+            <StaggerContainer revealKey={visiblePosts.length}>
+              {visiblePosts.map((post) => (
                 <PostCard key={post.id} post={post} userId={user.id} />
               ))}
             </StaggerContainer>

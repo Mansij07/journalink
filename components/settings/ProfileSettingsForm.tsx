@@ -124,21 +124,23 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
           </div>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="settings-username">Username</FieldLabel>
-          <Input id="settings-username" value={profile.username ?? ""} disabled readOnly />
-          <FieldDescription>Your username can&apos;t be changed.</FieldDescription>
-        </Field>
+        <div className="grid grid-cols-1 gap-4 @md/field-group:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="settings-username">Username</FieldLabel>
+            <Input id="settings-username" value={profile.username ?? ""} disabled readOnly />
+            <FieldDescription>Your username can&apos;t be changed.</FieldDescription>
+          </Field>
 
-        <Field>
-          <FieldLabel htmlFor="settings-fullname">Full name</FieldLabel>
-          <Input
-            id="settings-fullname"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Your name"
-          />
-        </Field>
+          <Field>
+            <FieldLabel htmlFor="settings-fullname">Full name</FieldLabel>
+            <Input
+              id="settings-fullname"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your name"
+            />
+          </Field>
+        </div>
 
         <Field>
           <FieldLabel htmlFor="settings-bio">Bio</FieldLabel>
@@ -151,7 +153,7 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
           />
         </Field>
 
-        <Field orientation="responsive">
+        <div className="grid grid-cols-1 gap-4 @md/field-group:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="settings-branch">Branch</FieldLabel>
             <Input
@@ -173,7 +175,7 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
               placeholder="e.g. 3"
             />
           </Field>
-        </Field>
+        </div>
 
         <Field>
           <FieldLabel htmlFor="settings-skills">Skills</FieldLabel>

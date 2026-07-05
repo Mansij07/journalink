@@ -22,13 +22,13 @@ export default async function SettingsPage() {
   if (!profile) redirect("/onboarding")
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-[640px] px-6 py-12">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground">
+          <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
             Settings
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-md text-muted-foreground">
             Manage your profile and preferences.
           </p>
         </div>

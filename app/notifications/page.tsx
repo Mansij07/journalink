@@ -23,7 +23,7 @@ export default async function NotificationsPage() {
     .limit(50)
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto w-full max-w-[640px] px-6 py-12">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground">

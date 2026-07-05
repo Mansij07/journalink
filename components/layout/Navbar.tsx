@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NavNotificationBell } from "@/components/layout/NavNotificationBell"
+import { TypingAnimation } from "@/components/ui/typing-animation"
 
 interface NavProfile {
   id: string
@@ -72,9 +73,15 @@ export default function Navbar() {
         {/* Wordmark */}
         <Link
           href="/feed"
-          className="mr-6 text-xl font-semibold tracking-[-0.03em] text-foreground"
+          className="mr-2 inline-block min-w-[8rem]"
+          aria-label="Journalink home"
         >
-          Journalink
+          <TypingAnimation
+            words={["Journalink"]}
+            loop
+            as="span"
+            className="text-xl font-semibold leading-none tracking-[-0.03em] text-foreground"
+          />
         </Link>
 
         {/* Primary links */}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
-import { invalidateProjects } from "@/lib/projects"
+import { invalidateProjects, shouldAutoClose } from "@/lib/projects"
 
 const ALLOWED_FIELDS = [
   "title",
@@ -40,6 +40,16 @@ export async function POST(request: Request) {
   const fields = pickFields(body)
   if (!fields.title) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 })
+  }
+
+  // Auto-close on creation when the deadline is already past or slots are 0.
+  if (
+    shouldAutoClose(
+      fields.deadline as string | null | undefined,
+      fields.slots as number | null | undefined
+    )
+  ) {
+    fields.status = "Closed"
   }
 
   const { data, error } = await supabase

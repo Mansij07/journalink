@@ -23,6 +23,12 @@ export async function GET(
   const post = await getPostById(supabase, id)
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
+  // A post scheduled for the future is only visible to its author.
+  const scheduledAt = post.scheduled_at as string | null | undefined
+  if (scheduledAt && Date.parse(scheduledAt) > Date.now() && post.author_id !== user.id) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
   const author = await getProfileById(supabase, post.author_id)
 
   return NextResponse.json({ ...post, profiles: author ?? null })
