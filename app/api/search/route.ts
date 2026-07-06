@@ -23,8 +23,8 @@ export async function GET(request: Request) {
       const [{ data: profiles }, { data: projects }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, username, role")
-          .ilike("username", `%${q}%`)
+          .select("id, username, role, avatar_url, full_name")
+          .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
           .limit(5),
         supabase
           .from("project")

@@ -12,8 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { PostCard } from "@/components/feed/PostCard"
-import { ProjectCard } from "@/components/projects/ProjectCard"
 import { FollowButton } from "@/components/profiles/FollowButton"
+import { ProfileProjects } from "@/components/profiles/ProfileProjects"
+import { FollowListDialog } from "@/components/profiles/FollowListDialog"
 import { StaggerContainer } from "@/components/StaggerContainer"
 
 export default async function ProfilePage({
@@ -80,39 +81,41 @@ export default async function ProfilePage({
 
   return (
     <div className="min-h-screen text-foreground">
-      <div className="mx-auto w-full max-w-[680px] px-6 py-10">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <Avatar size="lg" className="size-20">
+          <Avatar size="xl" className="size-20">
             {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt="" />}
-            <AvatarFallback className="text-2xl font-semibold">{initials}</AvatarFallback>
+            <AvatarFallback className="text-4xl font-semibold">{initials}</AvatarFallback>
           </Avatar>
-          {isMe ? (
-            <Button variant="outline" asChild>
-              <Link href="/settings">
-                <Pencil data-icon="inline-start" />
-                Edit Profile
-              </Link>
-            </Button>
-          ) : (
-            <FollowButton
-              targetId={profile.id}
-              currentUserId={user.id}
-              initialFollowing={!!followRow}
-            />
-          )}
         </div>
 
         <div className="mt-4 flex items-center gap-1.5">
-          <h1 className="text-xl font-semibold tracking-[-0.025em] text-foreground">
+          <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
             {displayName}
           </h1>
           {isProf && <BadgeCheck className="size-5 text-foreground" />}
+          <div className="ml-1.5">
+            {isMe ? (
+              <Button variant="outline" asChild>
+                <Link href="/settings">
+                  <Pencil data-icon="inline-start" />
+                  Edit Profile
+                </Link>
+              </Button>
+            ) : (
+              <FollowButton
+                targetId={profile.id}
+                currentUserId={user.id}
+                initialFollowing={!!followRow}
+              />
+            )}
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">@{profile.username}</p>
+        <p className="text-md text-muted-foreground">@{profile.username}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge variant={isProf ? "default" : "secondary"} className="font-normal">
+          <Badge variant={isProf ? "default" : "secondary"} className="font-normal h-7 px-3 text-md">
             {isProf ? "Professor" : "Student"}
           </Badge>
           {isProf
@@ -133,14 +136,14 @@ export default async function ProfilePage({
         </div>
 
         {profile.bio && (
-          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          <p className="mt-4 whitespace-pre-wrap text-lg leading-relaxed text-foreground">
             {profile.bio}
           </p>
         )}
 
         {Array.isArray(profile.skills) && profile.skills.length > 0 && (
           <div className="mt-4">
-            <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {isProf ? "Research interests" : "Skills"}
             </h2>
             <div className="flex flex-wrap gap-1.5">
@@ -153,15 +156,21 @@ export default async function ProfilePage({
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-5 text-sm">
-          <span className="text-foreground">
-            <span className="font-semibold">{following ?? 0}</span>{" "}
-            <span className="text-muted-foreground">Following</span>
-          </span>
-          <span className="text-foreground">
-            <span className="font-semibold">{followers ?? 0}</span>{" "}
-            <span className="text-muted-foreground">Followers</span>
-          </span>
+        <div className="mt-4 flex flex-wrap items-center gap-5 text-lg">
+          <FollowListDialog
+            userId={profile.id}
+            type="following"
+            count={following ?? 0}
+            label="Following"
+            isOwn={isMe}
+          />
+          <FollowListDialog
+            userId={profile.id}
+            type="followers"
+            count={followers ?? 0}
+            label="Followers"
+            isOwn={isMe}
+          />
           {isProf && (
             <span className="text-foreground">
               <span className="font-semibold">{projectList.length}</span>{" "}
@@ -180,42 +189,37 @@ export default async function ProfilePage({
           )}
         </div>
 
-        <Separator className="my-8" />
+        {isProf && <Separator className="my-8" />}
 
         {/* Professor's open projects */}
         {isProf && projectList.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-3 text-sm font-semibold tracking-[-0.01em] text-foreground">
+            <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-foreground">
               Open Projects
             </h2>
-            <StaggerContainer
-              revealKey={projectList.length}
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-            >
-              {projectList.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </StaggerContainer>
+            <ProfileProjects projects={projectList} />
           </section>
         )}
 
-        {/* Posts */}
-        <section>
-          <h2 className="mb-3 text-sm font-semibold tracking-[-0.01em] text-foreground">
-            Posts
-          </h2>
-          {visiblePosts.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              No posts yet.
-            </p>
-          ) : (
-            <StaggerContainer revealKey={visiblePosts.length}>
-              {visiblePosts.map((post) => (
-                <PostCard key={post.id} post={post} userId={user.id} />
-              ))}
-            </StaggerContainer>
-          )}
-        </section>
+        {/* Posts — only professors can create posts, so students have none */}
+        {isProf && (
+          <section>
+            <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-foreground">
+              Posts
+            </h2>
+            {visiblePosts.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No posts yet.
+              </p>
+            ) : (
+              <StaggerContainer revealKey={visiblePosts.length}>
+                {visiblePosts.map((post) => (
+                  <PostCard key={post.id} post={post} userId={user.id} />
+                ))}
+              </StaggerContainer>
+            )}
+          </section>
+        )}
       </div>
     </div>
   )

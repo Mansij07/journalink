@@ -10,6 +10,11 @@ const SUGGESTIONS_TTL = 10 * 60
 const followCountKey = (id: string) => `count:follow:${id}`
 const projectCountKey = (id: string) => `count:projects:${id}`
 const suggestionsKey = (userId: string) => `suggestions:${userId}`
+const followingIdsKey = (id: string) => `following:ids:${id}`
+const recentKey = (userId: string) => `recent:${userId}`
+
+const RECENT_TTL = 10 * 60
+const RECENT_LIMIT = 6
 
 export interface FollowCounts {
   followers: number
@@ -34,6 +39,61 @@ export async function getFollowCounts(
     ])
     return { followers: followers ?? 0, following: following ?? 0 }
   })
+}
+
+/** The set of profile ids `userId` currently follows. Cached per-user. */
+export async function getFollowingIds(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string[]> {
+  return cacheGetOrSet(followingIdsKey(userId), COUNT_TTL, async () => {
+    const { data } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", userId)
+    return (data ?? []).map((r) => r.following_id)
+  })
+}
+
+/**
+ * The profiles who follow `userId` (their followers). Two queries (ids from
+ * `follows`, then the profile rows) — no PostgREST embed — and uncached so the
+ * list reflects follow/remove changes immediately.
+ */
+export async function getFollowersProfiles(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Suggestion[]> {
+  const { data: rows } = await supabase
+    .from("follows")
+    .select("follower_id")
+    .eq("following_id", userId)
+  return profilesForIds(supabase, (rows ?? []).map((r) => r.follower_id))
+}
+
+/** The profiles `userId` follows. Same shape/approach as getFollowersProfiles. */
+export async function getFollowingProfiles(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Suggestion[]> {
+  const { data: rows } = await supabase
+    .from("follows")
+    .select("following_id")
+    .eq("follower_id", userId)
+  return profilesForIds(supabase, (rows ?? []).map((r) => r.following_id))
+}
+
+/** Fetch the given profile ids as `Suggestion` rows (order not guaranteed). */
+async function profilesForIds(
+  supabase: SupabaseClient,
+  ids: string[]
+): Promise<Suggestion[]> {
+  if (ids.length === 0) return []
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, role, avatar_url")
+    .in("id", ids)
+  return (data as Suggestion[]) ?? []
 }
 
 /** How many projects a professor owns. */
@@ -118,11 +178,67 @@ export async function invalidateFollow(
   await cacheDelete(
     followCountKey(followerId),
     followCountKey(followingId),
-    suggestionsKey(followerId)
+    suggestionsKey(followerId),
+    followingIdsKey(followerId)
   )
 }
 
 /** Bust a professor's project count (after create/delete of a project). */
 export async function invalidateProjectCount(profId: string): Promise<void> {
   await cacheDelete(projectCountKey(profId))
+}
+
+/**
+ * Profiles `userId` recently searched/viewed, most recent first. Redis-cached
+ * per-user (`recent:{userId}`), busted on record/clear.
+ */
+export async function getRecentSearches(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Suggestion[]> {
+  return cacheGetOrSet(recentKey(userId), RECENT_TTL, async () => {
+    const { data } = await supabase
+      .from("recent_searches")
+      .select(
+        "viewed_id, created_at, profiles:viewed_id(id, username, role, full_name, avatar_url)"
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(RECENT_LIMIT)
+
+    return (data ?? [])
+      .map((row) => {
+        const p = row.profiles as unknown as Suggestion | Suggestion[] | null
+        return Array.isArray(p) ? p[0] : p
+      })
+      .filter((p): p is Suggestion => p != null)
+  })
+}
+
+/** Record that `userId` viewed `viewedId` (upsert refreshes recency), bust cache. */
+export async function recordRecentSearch(
+  supabase: SupabaseClient,
+  userId: string,
+  viewedId: string
+): Promise<void> {
+  if (!viewedId || viewedId === userId) return
+  const { error } = await supabase
+    .from("recent_searches")
+    .upsert(
+      { user_id: userId, viewed_id: viewedId, created_at: new Date().toISOString() },
+      { onConflict: "user_id,viewed_id" }
+    )
+  if (error && process.env.NODE_ENV !== "production") {
+    console.warn("[recent_searches] upsert failed:", error.message)
+  }
+  await cacheDelete(recentKey(userId))
+}
+
+/** Clear all of `userId`'s recent searches, bust cache. */
+export async function clearRecentSearches(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<void> {
+  await supabase.from("recent_searches").delete().eq("user_id", userId)
+  await cacheDelete(recentKey(userId))
 }

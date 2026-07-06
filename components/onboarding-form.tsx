@@ -9,6 +9,9 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+/** Username handle rule (mirrors the server): letters, numbers, underscores, 3–30 chars. */
+const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/
+
 export default function OnboardingForm() {
   const [username, setUsername] = useState("")
   const [role, setRole] = useState<"Student" | "Prof">("Student")
@@ -17,7 +20,14 @@ export default function OnboardingForm() {
   const router = useRouter()
   const supabase = createClient()
 
+  const usernameValid = USERNAME_RE.test(username.trim())
+
   const handleSubmit = async () => {
+    if (!usernameValid) {
+      setError("Username may only contain letters, numbers, and underscores (3–30 chars), no spaces.")
+      return
+    }
+
     setLoading(true)
     setError("")
 
@@ -32,7 +42,7 @@ export default function OnboardingForm() {
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, role }),
+      body: JSON.stringify({ username: username.trim(), role }),
     })
 
     if (!res.ok) {
@@ -75,7 +85,7 @@ export default function OnboardingForm() {
           </Field>
           {error && <p className="text-sm text-error">{error}</p>}
           <Field>
-            <Button onClick={handleSubmit} disabled={loading || !username}>
+            <Button onClick={handleSubmit} disabled={loading || !usernameValid}>
               {loading ? "Saving..." : "Get started"}
             </Button>
           </Field>

@@ -12,8 +12,6 @@ const feedPageKey = (page: number) => `feed:page:${page}`
 const authorPostsKey = (authorId: string) => `posts:author:${authorId}`
 const postKey = (id: string) => `post:${id}`
 
-const AUTHOR_JOIN = "*, profiles!author_id ( id, username, full_name, avatar_url, role )"
-
 // Posts are loosely shaped throughout the UI (PostCard takes `post: any`).
 type PostRow = { id: string; author_id: string; [key: string]: unknown }
 
@@ -60,19 +58,32 @@ export async function getFeedPage(
   })
 }
 
-/** A single author's latest posts (with their profile joined), for profile pages. */
+/**
+ * A single author's latest posts (with their profile attached), for profile
+ * pages. Uses the same two-query approach as `getFeedPage` rather than a
+ * PostgREST embed — every post here shares one author, so we fetch that profile
+ * once and attach it as `profiles` (the shape PostCard expects).
+ */
 export async function getAuthorPosts(
   supabase: SupabaseClient,
   authorId: string
 ): Promise<PostRow[]> {
   return cacheGetOrSet(authorPostsKey(authorId), AUTHOR_POSTS_TTL, async () => {
-    const { data } = await supabase
+    const { data: postRows, error } = await supabase
       .from("post")
-      .select(AUTHOR_JOIN)
+      .select("*")
       .eq("author_id", authorId)
       .order("created_at", { ascending: false })
       .limit(20)
-    return (data as PostRow[]) ?? []
+    if (error || !postRows) return []
+
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authorId)
+      .maybeSingle()
+
+    return postRows.map((p) => ({ ...p, profiles: profileRow ?? null })) as PostRow[]
   })
 }
 

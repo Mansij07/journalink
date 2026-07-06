@@ -16,6 +16,9 @@ export async function GET() {
   return NextResponse.json(profile)
 }
 
+/** Username handle rule: letters, numbers, underscores only (URL-safe), 3–30 chars. */
+const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/
+
 /** Fields a user is allowed to change on their own profile. */
 const ALLOWED_FIELDS = [
   "full_name",
@@ -56,6 +59,18 @@ export async function PATCH(request: Request) {
   }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
+  }
+  // Usernames are URL handles (/profiles/[username]), so they must be URL-safe:
+  // letters, numbers, and underscores only — no spaces or other characters.
+  if ("username" in updates) {
+    const u = typeof updates.username === "string" ? updates.username.trim() : ""
+    if (!USERNAME_RE.test(u)) {
+      return NextResponse.json(
+        { error: "Username may only contain letters, numbers, and underscores (3–30 chars), no spaces." },
+        { status: 400 }
+      )
+    }
+    updates.username = u
   }
   const { data, error } = await supabase
     .from("profiles")
