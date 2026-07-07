@@ -24,20 +24,22 @@ export default async function NotificationsPage() {
 
   return (
     <div className="min-h-screen text-foreground">
-      <div className="mx-auto w-full max-w-[640px] px-6 py-12">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
+        <div className="mb-8">
+          <h1 className="text-4xl font-semibold tracking-[-0.025em] text-foreground">
             Notifications
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-lg text-muted-foreground">
             Activity on your posts, projects, and applications.
           </p>
         </div>
 
-        <NotificationList
-          initial={(data as unknown as NotificationItem[]) ?? []}
-          userId={user.id}
-        />
+        <div className="max-w-[640px]">
+          <NotificationList
+            initial={(data as unknown as NotificationItem[]) ?? []}
+            userId={user.id}
+          />
+        </div>
       </div>
     </div>
   )

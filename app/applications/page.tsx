@@ -3,6 +3,10 @@ import { redirect } from "next/navigation"
 
 import { acceptCapForYear, getProfileById } from "@/lib/profile"
 import {
+  getProfessorApplications,
+  getStudentApplications,
+} from "@/lib/applications"
+import {
   ApplicationsView,
   type StudentApplication,
   type ProfessorApplication,
@@ -26,23 +30,9 @@ export default async function ApplicationsPage() {
 
   if (isProf) {
     // Applications across all of this professor's projects.
-    const { data } = await supabase
-      .from("applications")
-      .select(
-        "id, status, message, created_at, project!inner ( id, title, professor_id ), applicant:profiles!applicant_id ( id, username, full_name, avatar_url, role )"
-      )
-      .eq("project.professor_id", user.id)
-      .order("created_at", { ascending: false })
-    professorApplications = (data as unknown as ProfessorApplication[]) ?? []
+    professorApplications = await getProfessorApplications(supabase, user.id)
   } else {
-    const { data } = await supabase
-      .from("applications")
-      .select(
-        "id, status, message, created_at, project ( id, title, status, profiles!professor_id ( id, username, full_name, avatar_url ) )"
-      )
-      .eq("applicant_id", user.id)
-      .order("created_at", { ascending: false })
-    studentApplications = (data as unknown as StudentApplication[]) ?? []
+    studentApplications = await getStudentApplications(supabase, user.id)
     confirmedCount = studentApplications.filter((a) => a.status === "confirmed").length
   }
 

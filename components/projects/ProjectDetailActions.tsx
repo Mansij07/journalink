@@ -19,6 +19,8 @@ interface ProjectDetailActionsProps {
   applied: boolean
   applicationStatus: ApplicationStatus | null
   applicationCount: number
+  atCap: boolean
+  acceptCap: number
 }
 
 export function ProjectDetailActions({
@@ -30,6 +32,8 @@ export function ProjectDetailActions({
   applied,
   applicationStatus,
   applicationCount,
+  atCap,
+  acceptCap,
 }: ProjectDetailActionsProps) {
   const [applyOpen, setApplyOpen] = React.useState(false)
   const [editOpen, setEditOpen] = React.useState(false)
@@ -84,6 +88,23 @@ export function ProjectDetailActions({
           <Link href="/settings" className="text-foreground underline underline-offset-4">
             Go to settings
           </Link>
+        </p>
+      </div>
+    )
+  }
+
+  // Gate: students who have joined their year's limit of projects can't apply
+  // to more until they leave one.
+  if (atCap) {
+    return (
+      <div className="flex flex-col gap-2">
+        <Button disabled>Apply to project</Button>
+        <p className="text-sm text-muted-foreground">
+          You&apos;ve reached your project limit ({acceptCap}/{acceptCap}). Leave a project from{" "}
+          <Link href="/applications" className="text-foreground underline underline-offset-4">
+            your applications
+          </Link>{" "}
+          to apply to more.
         </p>
       </div>
     )

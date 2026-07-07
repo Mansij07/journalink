@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
 import type { Profile } from "@/lib/types"
+import { getProfileById } from "@/lib/profile"
 import { Separator } from "@/components/ui/separator"
 import { ProfileSettingsForm } from "@/components/settings/ProfileSettingsForm"
 import { AppearanceAndAccount } from "@/components/settings/AppearanceAndAccount"
@@ -13,11 +14,7 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single()
+  const profile = await getProfileById(supabase, user.id)
 
   if (!profile) redirect("/onboarding")
 

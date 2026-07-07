@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
 import { invalidateProjects } from "@/lib/projects"
+import { invalidateApplications } from "@/lib/applications"
 
 /**
  * Confirm (accept) an application via the atomic `confirm_application` RPC,
@@ -25,11 +26,14 @@ export async function POST(
   // Find the affected project so we can target its caches.
   const { data: app } = await supabase
     .from("applications")
-    .select("project:project_id ( id, professor_id )")
+    .select("applicant_id, project:project_id ( id, professor_id )")
     .eq("id", id)
     .maybeSingle()
   const project = (app?.project ?? null) as { id: number; professor_id: string } | null
-  if (project) await invalidateProjects(project.professor_id, project.id)
+  if (project) {
+    await invalidateProjects(project.professor_id, project.id)
+    await invalidateApplications(app!.applicant_id as string, project.professor_id)
+  }
 
   return NextResponse.json({ ok: true })
 }

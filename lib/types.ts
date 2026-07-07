@@ -43,6 +43,7 @@ export type ApplicationStatus =
   | "rejected"
   | "confirmed"
   | "declined"
+  | "left"
 
 export interface Application {
   id: string
@@ -50,6 +51,7 @@ export interface Application {
   applicant_id: string
   message: string | null
   status: ApplicationStatus
+  leave_requested: boolean
   created_at: string
   updated_at: string
 }

@@ -12,9 +12,11 @@ const projectCountKey = (id: string) => `count:projects:${id}`
 const suggestionsKey = (userId: string) => `suggestions:${userId}`
 const followingIdsKey = (id: string) => `following:ids:${id}`
 const recentKey = (userId: string) => `recent:${userId}`
+const mentionsKey = (userId: string) => `mentions:${userId}`
 
 const RECENT_TTL = 10 * 60
 const RECENT_LIMIT = 6
+const MENTIONS_TTL = 10 * 60
 
 export interface FollowCounts {
   followers: number
@@ -52,6 +54,40 @@ export async function getFollowingIds(
       .select("following_id")
       .eq("follower_id", userId)
     return (data ?? []).map((r) => r.following_id)
+  })
+}
+
+/** A profile usable as an @-mention target. */
+export interface MentionCandidate {
+  id: string
+  username: string | null
+  full_name: string | null
+  avatar_url: string | null
+}
+
+/**
+ * Candidate pool for @-mention autocomplete: the profiles `userId` follows. The
+ * client filters this by the typed query. Cached per-user (`mentions:{userId}`)
+ * and busted by `invalidateFollow` when the follow set changes; a followed
+ * user's rename goes slightly stale until the TTL — acceptable for autocomplete.
+ */
+export async function getMentionCandidates(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<MentionCandidate[]> {
+  return cacheGetOrSet(mentionsKey(userId), MENTIONS_TTL, async () => {
+    const { data: follows } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", userId)
+    const ids = (follows ?? []).map((f) => f.following_id)
+    if (ids.length === 0) return []
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url")
+      .in("id", ids)
+    return (profiles as MentionCandidate[]) ?? []
   })
 }
 
@@ -179,7 +215,8 @@ export async function invalidateFollow(
     followCountKey(followerId),
     followCountKey(followingId),
     suggestionsKey(followerId),
-    followingIdsKey(followerId)
+    followingIdsKey(followerId),
+    mentionsKey(followerId)
   )
 }
 

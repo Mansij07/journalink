@@ -185,14 +185,14 @@ export function NotificationList({
                 </span>
               </div>
 
-              <p className="min-w-0 flex-1 text-sm text-foreground">
+              <p className="min-w-0 flex-1 text-md text-foreground">
                 <span className="font-medium">{actorName}</span>{" "}
                 <span className="text-muted-foreground">{describe(n.type)}</span>
               </p>
 
               <RelativeTime
                 dateString={n.created_at}
-                className="shrink-0 text-xs text-muted-foreground"
+                className="shrink-0 text-sm text-muted-foreground"
               />
               {!n.read && <span className="size-2 shrink-0 rounded-full bg-foreground" />}
             </Link>

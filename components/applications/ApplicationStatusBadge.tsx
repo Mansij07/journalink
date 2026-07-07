@@ -8,13 +8,22 @@ const LABEL: Record<ApplicationStatus, string> = {
   confirmed: "Joined", // student accepted the offer
   rejected: "Rejected",
   declined: "Declined", // student declined the offer
+  left: "Left", // student left the project (prof-approved un-join)
 }
 
 /**
- * Achromatic status chip — distinguished by fill weight, not color, per the
- * monochrome design system. Joined = solid graphite, Offered = mist,
- * Pending = outline, Rejected/Declined = muted outline.
+ * Color-coded status chip: Joined = green (success), Offered/Pending = yellow
+ * (warning), Rejected/Declined = red (error), Left = neutral (secondary).
  */
+const VARIANT: Record<ApplicationStatus, "success" | "warning" | "error" | "secondary"> = {
+  confirmed: "success",
+  accepted: "warning",
+  pending: "warning",
+  rejected: "error",
+  declined: "error",
+  left: "secondary",
+}
+
 export function ApplicationStatusBadge({
   status,
   className,
@@ -22,24 +31,8 @@ export function ApplicationStatusBadge({
   status: ApplicationStatus
   className?: string
 }) {
-  const variant =
-    status === "confirmed"
-      ? "default"
-      : status === "accepted"
-        ? "secondary"
-        : "outline"
-
-  const isNegative = status === "rejected" || status === "declined"
-
   return (
-    <Badge
-      variant={variant}
-      className={cn(
-        "font-normal",
-        isNegative && "text-muted-foreground",
-        className
-      )}
-    >
+    <Badge variant={VARIANT[status]} className={cn("font-normal", className)}>
       {LABEL[status]}
     </Badge>
   )
