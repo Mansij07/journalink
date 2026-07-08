@@ -5,7 +5,6 @@ import Link from "next/link"
 import { FileText, Briefcase, Send } from "lucide-react"
 
 import type { ApplicationStatus } from "@/lib/types"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -17,6 +16,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
+import { ApplicationDialog } from "@/components/applications/ApplicationDialog"
 import { useStaggerReveal } from "@/lib/animations"
 import { RelativeTime } from "@/components/feed/RelativeTime"
 
@@ -32,6 +32,8 @@ export interface StudentApplication {
   id: string
   status: ApplicationStatus
   message: string | null
+  decision_message: string | null
+  resume_url: string | null
   leave_requested: boolean
   created_at: string
   project: {
@@ -46,6 +48,8 @@ export interface ProfessorApplication {
   id: string
   status: ApplicationStatus
   message: string | null
+  decision_message: string | null
+  resume_url: string | null
   leave_requested: boolean
   created_at: string
   project: { id: number; title: string } | null
@@ -58,6 +62,7 @@ interface ApplicationsViewProps {
   professorApplications: ProfessorApplication[]
   acceptCap?: number
   confirmedCount?: number
+  scopedProjectTitle?: string
 }
 
 export function ApplicationsView({
@@ -66,10 +71,12 @@ export function ApplicationsView({
   professorApplications,
   acceptCap = 1,
   confirmedCount = 0,
+  scopedProjectTitle,
 }: ApplicationsViewProps) {
   const isEmpty = isProf
     ? professorApplications.length === 0
     : studentApplications.length === 0
+  const scoped = isProf && !!scopedProjectTitle
 
   return (
     <div className="min-h-screen text-foreground">
@@ -79,10 +86,25 @@ export function ApplicationsView({
             {isProf ? "Applications" : "My Applications"}
           </h1>
           <p className="mt-1 text-lg text-muted-foreground">
-            {isProf
-              ? "Review applications from students interested in your projects"
-              : "Track the status of projects you've applied to"}
+            {scoped ? (
+              <>
+                Applications for{" "}
+                <span className="text-foreground">“{scopedProjectTitle}”</span>
+              </>
+            ) : isProf ? (
+              "Review applications from students interested in your projects"
+            ) : (
+              "Track the status of projects you've applied to"
+            )}
           </p>
+          {scoped && (
+            <Link
+              href="/applications"
+              className="mt-2 inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              View all applications
+            </Link>
+          )}
         </div>
         {isEmpty ? (
           <div className="flex items-center justify-center py-24">
@@ -152,55 +174,9 @@ function StudentList({
   acceptCap: number
   confirmedCount: number
 }) {
-  const [items, setItems] = React.useState(applications)
-  const [confirmed, setConfirmed] = React.useState(confirmedCount)
-  const [pendingId, setPendingId] = React.useState<string | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
   const ref = useStaggerReveal<HTMLDivElement>(applications.length)
-
-  const capReached = confirmed >= acceptCap
-
-  const accept = async (id: string) => {
-    setPendingId(id)
-    setError(null)
-    const res = await fetch(`/api/applications/${id}/confirm`, { method: "POST" })
-    setPendingId(null)
-    if (!res.ok) {
-      const { error: msg } = await res.json().catch(() => ({ error: "Accept failed" }))
-      setError(msg ?? "Accept failed")
-      return
-    }
-    setItems((list) => list.map((a) => (a.id === id ? { ...a, status: "confirmed" } : a)))
-    setConfirmed((c) => c + 1)
-  }
-
-  const decline = async (id: string) => {
-    setPendingId(id)
-    setError(null)
-    const prev = items
-    setItems((list) => list.map((a) => (a.id === id ? { ...a, status: "declined" } : a)))
-    const res = await fetch(`/api/applications/${id}/decline`, { method: "POST" })
-    setPendingId(null)
-    if (!res.ok) {
-      setItems(prev)
-      const { error: msg } = await res.json().catch(() => ({ error: "Decline failed" }))
-      setError(msg ?? "Decline failed")
-    }
-  }
-
-  const requestLeave = async (id: string) => {
-    setPendingId(id)
-    setError(null)
-    const prev = items
-    setItems((list) => list.map((a) => (a.id === id ? { ...a, leave_requested: true } : a)))
-    const res = await fetch(`/api/applications/${id}/leave`, { method: "POST" })
-    setPendingId(null)
-    if (!res.ok) {
-      setItems(prev)
-      const { error: msg } = await res.json().catch(() => ({ error: "Request failed" }))
-      setError(msg ?? "Request failed")
-    }
-  }
+  const capReached = confirmedCount >= acceptCap
+  const [selected, setSelected] = React.useState<StudentApplication | null>(null)
 
   return (
     <div className="flex flex-col gap-3">
@@ -208,33 +184,30 @@ function StudentList({
         <span className="text-muted-foreground">
           Accepted projects:{" "}
           <span className="font-medium text-foreground">
-            {confirmed} of {acceptCap}
+            {confirmedCount} of {acceptCap}
           </span>
         </span>
         {capReached && (
           <span className="text-sm text-muted-foreground">Accept limit reached for your year</span>
         )}
       </div>
-      {error && <p className="text-sm text-error">{error}</p>}
 
       <div ref={ref} className="flex flex-col gap-3">
-        {items.map((app) => {
+        {applications.map((app) => {
           const prof = app.project?.profiles
           const profName = prof?.full_name || prof?.username || "Unknown"
-          const offered = app.status === "accepted"
           return (
-            <div
+            <button
               key={app.id}
-              className="rounded-xl border border-border bg-card p-4 text-card-foreground"
+              type="button"
+              onClick={() => setSelected(app)}
+              className="block w-full rounded-xl border border-border bg-card p-4 text-left text-card-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <Link
-                    href={app.project ? `/projects/${app.project.id}` : "#"}
-                    className="text-xl font-semibold tracking-[-0.01em] text-foreground hover:underline"
-                  >
+                  <p className="truncate text-xl font-semibold tracking-[-0.01em] text-foreground">
                     {app.project?.title ?? "Untitled project"}
-                  </Link>
+                  </p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {profName}
                     {prof?.username && (
@@ -250,107 +223,39 @@ function StudentList({
               <p className="mt-3 text-sm text-muted-foreground">
                 Applied <RelativeTime dateString={app.created_at} /> ago
               </p>
-
-              {offered && (
-                <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => accept(app.id)}
-                    disabled={pendingId === app.id || capReached}
-                  >
-                    Accept offer
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => decline(app.id)}
-                    disabled={pendingId === app.id}
-                  >
-                    Decline
-                  </Button>
-                  {capReached && (
-                    <span className="text-sm text-muted-foreground">
-                      Limit reached — decline another to free a slot
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {app.status === "confirmed" && (
-                <div className="mt-3 flex items-center gap-2">
-                  {app.leave_requested ? (
-                    <span className="text-sm text-muted-foreground">
-                      Leave requested — waiting for professor approval
-                    </span>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => requestLeave(app.id)}
-                      disabled={pendingId === app.id}
-                    >
-                      Request to leave
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+            </button>
           )
         })}
       </div>
+
+      <ApplicationDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        application={selected}
+        isOwnerProf={false}
+        isApplicant
+        acceptCap={acceptCap}
+        confirmedCount={confirmedCount}
+      />
     </div>
   )
 }
 
 function ProfessorList({ applications }: { applications: ProfessorApplication[] }) {
-  const [items, setItems] = React.useState(applications)
-  const [pendingId, setPendingId] = React.useState<string | null>(null)
   const ref = useStaggerReveal<HTMLDivElement>(applications.length)
-
-  const decide = async (id: string, status: ApplicationStatus) => {
-    setPendingId(id)
-    const prev = items
-    setItems((list) =>
-      list.map((a) => (a.id === id ? { ...a, status } : a))
-    )
-    const res = await fetch(`/api/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    })
-    setPendingId(null)
-    if (!res.ok) setItems(prev) // revert on failure
-  }
-
-  const resolveLeave = async (id: string, approve: boolean) => {
-    setPendingId(id)
-    const prev = items
-    setItems((list) =>
-      list.map((a) =>
-        a.id === id
-          ? { ...a, leave_requested: false, status: approve ? "left" : a.status }
-          : a
-      )
-    )
-    const res = await fetch(`/api/applications/${id}/leave`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ approve }),
-    })
-    setPendingId(null)
-    if (!res.ok) setItems(prev) // revert on failure
-  }
+  const [selected, setSelected] = React.useState<ProfessorApplication | null>(null)
 
   return (
     <div ref={ref} className="flex flex-col gap-3">
-      {items.map((app) => {
+      {applications.map((app) => {
         const who = app.applicant
         const whoName = who?.full_name || who?.username || "Unknown"
-        const decided = app.status !== "pending"
         return (
-          <div
+          <button
             key={app.id}
-            className="rounded-xl border border-border bg-card p-4 text-card-foreground"
+            type="button"
+            onClick={() => setSelected(app)}
+            className="block w-full rounded-xl border border-border bg-card p-4 text-left text-card-foreground transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5">
@@ -359,21 +264,10 @@ function ProfessorList({ applications }: { applications: ProfessorApplication[] 
                   <AvatarFallback>{whoName.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <Link
-                    href={who?.username ? `/profiles/${who.username}` : "#"}
-                    className="text-md font-semibold text-foreground hover:underline"
-                  >
-                    {whoName}
-                  </Link>
+                  <p className="truncate text-md font-semibold text-foreground">{whoName}</p>
                   <p className="text-sm text-muted-foreground">
-                    applied to{" "}
-                    <Link
-                      href={app.project ? `/projects/${app.project.id}` : "#"}
-                      className="text-foreground hover:underline"
-                    >
-                      {app.project?.title ?? "a project"}
-                    </Link>{" "}
-                    · <RelativeTime dateString={app.created_at} /> ago
+                    applied to {app.project?.title ?? "a project"} ·{" "}
+                    <RelativeTime dateString={app.created_at} /> ago
                   </p>
                 </div>
               </div>
@@ -381,54 +275,27 @@ function ProfessorList({ applications }: { applications: ProfessorApplication[] 
             </div>
 
             {app.message && (
-              <p className="mt-3 whitespace-pre-wrap text-md text-muted-foreground">
+              <p className="mt-3 line-clamp-2 text-md text-muted-foreground">
                 {app.message}
               </p>
             )}
 
-            <div className={cn("mt-3 flex items-center gap-2", decided && "hidden")}>
-              <Button
-                size="sm"
-                onClick={() => decide(app.id, "accepted")}
-                disabled={pendingId === app.id}
-              >
-                Accept
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => decide(app.id, "rejected")}
-                disabled={pendingId === app.id}
-              >
-                Reject
-              </Button>
-            </div>
-
             {app.status === "confirmed" && app.leave_requested && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="mr-1 text-sm text-muted-foreground">
-                  Requested to leave this project
-                </span>
-                <Button
-                  size="sm"
-                  onClick={() => resolveLeave(app.id, true)}
-                  disabled={pendingId === app.id}
-                >
-                  Approve leave
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => resolveLeave(app.id, false)}
-                  disabled={pendingId === app.id}
-                >
-                  Deny
-                </Button>
-              </div>
+              <p className="mt-3 text-sm text-warning">Requested to leave this project</p>
             )}
-          </div>
+          </button>
         )
       })}
+
+      <ApplicationDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        application={selected}
+        isOwnerProf
+        isApplicant={false}
+        acceptCap={0}
+        confirmedCount={0}
+      />
     </div>
   )
 }

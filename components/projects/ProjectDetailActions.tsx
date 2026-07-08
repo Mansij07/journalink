@@ -6,12 +6,13 @@ import { Pencil, Users } from "lucide-react"
 
 import type { ApplicationStatus, ProjectWithProfessor } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ApplyDialog } from "@/components/applications/ApplyDialog"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { ProjectForm } from "@/components/projects/ProjectForm"
 
-interface ProjectDetailActionsProps {
-  project: ProjectWithProfessor
+/** Per-viewer gating state, loaded from /api/projects/[id]/viewer-state. */
+interface ViewerState {
   userId: string
   isOwner: boolean
   isStudent: boolean
@@ -19,25 +20,41 @@ interface ProjectDetailActionsProps {
   applied: boolean
   applicationStatus: ApplicationStatus | null
   applicationCount: number
-  atCap: boolean
   acceptCap: number
+  atCap: boolean
 }
 
-export function ProjectDetailActions({
-  project,
-  userId,
-  isOwner,
-  isStudent,
-  profileComplete,
-  applied,
-  applicationStatus,
-  applicationCount,
-  atCap,
-  acceptCap,
-}: ProjectDetailActionsProps) {
+export function ProjectDetailActions({ project }: { project: ProjectWithProfessor }) {
   const [applyOpen, setApplyOpen] = React.useState(false)
   const [editOpen, setEditOpen] = React.useState(false)
-  const [hasApplied, setHasApplied] = React.useState(applied)
+  const [hasApplied, setHasApplied] = React.useState(false)
+  const [state, setState] = React.useState<ViewerState | null>(null)
+
+  // The personalized "hole": load the current user's gating state after mount,
+  // so the project page shell can be served as shared, cache-friendly output.
+  React.useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const res = await fetch(`/api/projects/${project.id}/viewer-state`)
+      if (!res.ok || cancelled) return
+      const data = (await res.json()) as ViewerState
+      if (cancelled) return
+      setState(data)
+      setHasApplied(data.applied)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [project.id])
+
+  // Placeholder while the per-user state loads.
+  if (!state) {
+    return <Skeleton className="h-9 w-40 rounded-lg" />
+  }
+
+  const { isOwner, isStudent, profileComplete, applicationStatus, applicationCount, atCap, acceptCap } =
+    state
 
   if (isOwner) {
     return (
@@ -48,7 +65,7 @@ export function ProjectDetailActions({
             Edit project
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/applications">
+            <Link href={`/applications?project=${project.id}`}>
               <Users data-icon="inline-start" />
               {applicationCount} application{applicationCount === 1 ? "" : "s"}
             </Link>
@@ -57,7 +74,7 @@ export function ProjectDetailActions({
         <ProjectForm
           open={editOpen}
           onOpenChange={setEditOpen}
-          professorId={userId}
+          professorId={state.userId}
           project={project}
         />
       </>
@@ -120,7 +137,8 @@ export function ProjectDetailActions({
         onOpenChange={setApplyOpen}
         projectId={project.id}
         projectTitle={project.title}
-        applicantId={userId}
+        applicantId={state.userId}
+        resumeRequired={project.resume_required ?? false}
         onApplied={() => setHasApplied(true)}
       />
     </>

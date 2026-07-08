@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { acceptCapForYear, getProfileById } from "@/lib/profile"
 import {
   getProfessorApplications,
+  getProfessorApplicationsForProject,
   getStudentApplications,
 } from "@/lib/applications"
 import {
@@ -12,7 +13,11 @@ import {
   type ProfessorApplication,
 } from "@/components/applications/ApplicationsView"
 
-export default async function ApplicationsPage() {
+export default async function ApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string }>
+}) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -23,14 +28,36 @@ export default async function ApplicationsPage() {
 
   const isProf = (profile?.role ?? "Student") === "Prof"
   const acceptCap = acceptCapForYear(profile?.year ?? null)
+  const { project: projectParam } = await searchParams
 
   let studentApplications: StudentApplication[] = []
   let professorApplications: ProfessorApplication[] = []
   let confirmedCount = 0
+  let scopedProjectTitle: string | undefined
 
   if (isProf) {
-    // Applications across all of this professor's projects.
-    professorApplications = await getProfessorApplications(supabase, user.id)
+    const projectId = Number(projectParam)
+    // Scope to one project only when the param names a project this professor owns.
+    if (projectParam && Number.isFinite(projectId)) {
+      const { data: proj } = await supabase
+        .from("project")
+        .select("title")
+        .eq("id", projectId)
+        .eq("professor_id", user.id)
+        .maybeSingle()
+      if (proj) {
+        scopedProjectTitle = proj.title as string
+        professorApplications = await getProfessorApplicationsForProject(
+          supabase,
+          user.id,
+          projectId
+        )
+      }
+    }
+    // No/invalid/unowned param → all of this professor's applications.
+    if (!scopedProjectTitle) {
+      professorApplications = await getProfessorApplications(supabase, user.id)
+    }
   } else {
     studentApplications = await getStudentApplications(supabase, user.id)
     confirmedCount = studentApplications.filter((a) => a.status === "confirmed").length
@@ -43,6 +70,7 @@ export default async function ApplicationsPage() {
       professorApplications={professorApplications}
       acceptCap={acceptCap}
       confirmedCount={confirmedCount}
+      scopedProjectTitle={scopedProjectTitle}
     />
   )
 }

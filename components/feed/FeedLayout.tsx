@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { PostComposer } from "./PostComposer"
 import { PostCard } from "./PostCard"
 import { LeftSidebar } from "./LeftSidebar"
@@ -25,20 +25,28 @@ interface FeedLayoutProps {
   projectsCount: number
   suggestions: Suggestion[]
   followsYouIds: string[]
+  initialPosts: any[]
+  initialHasMore: boolean
 }
 
-export function FeedLayout({ profile, userId, followersCount, followingCount, projectsCount, suggestions, followsYouIds }: FeedLayoutProps) {
+export function FeedLayout({ profile, userId, followersCount, followingCount, projectsCount, suggestions, followsYouIds, initialPosts, initialHasMore }: FeedLayoutProps) {
   const activeTab = "all" as const
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<any[]>(initialPosts)
   const [page, setPage] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  // Page 0 is server-rendered/seeded — skip the initial client fetch.
+  const seededRef = useRef(true)
 
   const role = profile?.role || "Student"
 
   useEffect(() => {
+    if (seededRef.current && page === 0 && refreshKey === 0) {
+      seededRef.current = false
+      return
+    }
     let cancelled = false
 
     const load = async () => {

@@ -4,12 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { cacheGetOrSet, cacheDelete, cacheDeleteByPrefix } from "@/lib/redis"
 
 const FEED_BATCH_SIZE = 10
+const AUTHOR_BATCH_SIZE = 5 // profile posts load a small page at a time on scroll
 const FEED_TTL = 45 // feed should feel fresh
 const AUTHOR_POSTS_TTL = 5 * 60
 const POST_TTL = 60 * 60 // a post's own content is effectively immutable
 
 const feedPageKey = (page: number) => `feed:page:${page}`
-const authorPostsKey = (authorId: string) => `posts:author:${authorId}`
+const authorPostsPageKey = (authorId: string, page: number, own: boolean) =>
+  `posts:author:${authorId}:${own ? "own" : "page"}:${page}`
 const postKey = (id: string) => `post:${id}`
 
 // Posts are loosely shaped throughout the UI (PostCard takes `post: any`).
@@ -59,32 +61,54 @@ export async function getFeedPage(
 }
 
 /**
- * A single author's latest posts (with their profile attached), for profile
- * pages. Uses the same two-query approach as `getFeedPage` rather than a
- * PostgREST embed — every post here shares one author, so we fetch that profile
- * once and attach it as `profiles` (the shape PostCard expects).
+ * One page of a single author's posts (newest first), with their profile
+ * attached — for infinite scroll on profile pages. Same two-query approach as
+ * `getFeedPage`: every post shares one author, so the profile is fetched once
+ * and attached as `profiles` (the shape PostCard expects). When
+ * `includeScheduled` is false (a non-owner viewer), future-scheduled posts are
+ * hidden, mirroring the feed.
  */
-export async function getAuthorPosts(
+export async function getAuthorPostsPage(
   supabase: SupabaseClient,
-  authorId: string
-): Promise<PostRow[]> {
-  return cacheGetOrSet(authorPostsKey(authorId), AUTHOR_POSTS_TTL, async () => {
-    const { data: postRows, error } = await supabase
-      .from("post")
-      .select("*")
-      .eq("author_id", authorId)
-      .order("created_at", { ascending: false })
-      .limit(20)
-    if (error || !postRows) return []
+  authorId: string,
+  page: number,
+  includeScheduled: boolean
+): Promise<FeedPage> {
+  return cacheGetOrSet(
+    authorPostsPageKey(authorId, page, includeScheduled),
+    AUTHOR_POSTS_TTL,
+    async () => {
+      const from = page * AUTHOR_BATCH_SIZE
+      const to = from + AUTHOR_BATCH_SIZE - 1
 
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authorId)
-      .maybeSingle()
+      let query = supabase
+        .from("post")
+        .select("*")
+        .eq("author_id", authorId)
+      if (!includeScheduled) {
+        query = query.or(
+          `scheduled_at.is.null,scheduled_at.lte.${new Date().toISOString()}`
+        )
+      }
+      const { data: postRows, error } = await query
+        .order("created_at", { ascending: false })
+        .range(from, to)
 
-    return postRows.map((p) => ({ ...p, profiles: profileRow ?? null })) as PostRow[]
-  })
+      if (error || !postRows) return { posts: [], hasMore: false }
+
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authorId)
+        .maybeSingle()
+
+      const posts = postRows.map((p) => ({
+        ...p,
+        profiles: profileRow ?? null,
+      }))
+      return { posts, hasMore: postRows.length === AUTHOR_BATCH_SIZE }
+    }
+  )
 }
 
 /**
@@ -108,8 +132,8 @@ export async function invalidatePost(id: string): Promise<void> {
   await cacheDelete(postKey(id))
 }
 
-/** Bust all feed pages and the author's post list after a new/changed post. */
+/** Bust all feed pages and the author's paginated post lists after a new/changed post. */
 export async function invalidateFeedAndAuthor(authorId: string): Promise<void> {
   await cacheDeleteByPrefix("feed:page:")
-  await cacheDelete(authorPostsKey(authorId))
+  await cacheDeleteByPrefix(`posts:author:${authorId}:`)
 }

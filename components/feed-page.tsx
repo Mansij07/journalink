@@ -18,6 +18,8 @@ interface FeedClientProps {
   projectsCount: number
   suggestions: Suggestion[]
   followsYouIds: string[]
+  initialPosts: any[]
+  initialHasMore: boolean
 }
 
 export function FeedClient({
@@ -28,6 +30,8 @@ export function FeedClient({
   projectsCount,
   suggestions,
   followsYouIds,
+  initialPosts,
+  initialHasMore,
 }: FeedClientProps) {
   return (
     <FeedLayout
@@ -38,6 +42,8 @@ export function FeedClient({
       projectsCount={projectsCount}
       suggestions={suggestions}
       followsYouIds={followsYouIds}
+      initialPosts={initialPosts}
+      initialHasMore={initialHasMore}
     />
   )
 }

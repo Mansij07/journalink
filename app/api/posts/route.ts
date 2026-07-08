@@ -1,7 +1,26 @@
 import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
-import { invalidateFeedAndAuthor } from "@/lib/posts"
+import { getAuthorPostsPage, invalidateFeedAndAuthor } from "@/lib/posts"
+
+/** One cached page of a single author's posts. `?author=` required, `?page=` defaults to 0. */
+export async function GET(request: Request) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const url = new URL(request.url)
+  const author = url.searchParams.get("author")
+  if (!author) return NextResponse.json({ error: "author required" }, { status: 400 })
+  const page = Math.max(0, Number(url.searchParams.get("page")) || 0)
+
+  // Only the author sees their own future-scheduled posts.
+  const includeScheduled = author === user.id
+  const result = await getAuthorPostsPage(supabase, author, page, includeScheduled)
+  return NextResponse.json(result)
+}
 
 /**
  * Create a post for the current user, then bust the feed + author caches.
@@ -42,16 +61,20 @@ export async function POST(request: Request) {
     scheduledAt = new Date(t).toISOString()
   }
 
-  const { error } = await supabase.from("post").insert({
-    content,
-    author_id: user.id,
-    category: "Announcement",
-    ...(media && media.length > 0 ? { media } : {}),
-    ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
-  })
+  const { data, error } = await supabase
+    .from("post")
+    .insert({
+      content,
+      author_id: user.id,
+      category: "Announcement",
+      ...(media && media.length > 0 ? { media } : {}),
+      ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+    })
+    .select("id")
+    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   await invalidateFeedAndAuthor(user.id)
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ id: data.id })
 }

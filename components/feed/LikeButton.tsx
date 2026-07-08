@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Heart } from "lucide-react"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -40,10 +41,21 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
     if (!loaded) return
 
     const wasLiked = liked
+    const prevCount = count
     setLiked(!wasLiked)
     setCount((prev) => (wasLiked ? prev - 1 : prev + 1))
 
-    await fetch(`/api/posts/${postId}/likes`, { method: wasLiked ? "DELETE" : "POST" })
+    try {
+      const res = await fetch(`/api/posts/${postId}/likes`, {
+        method: wasLiked ? "DELETE" : "POST",
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      // Reconcile: roll back to the pre-click state and tell the user.
+      setLiked(wasLiked)
+      setCount(prevCount)
+      toast.error(wasLiked ? "Couldn't remove like" : "Couldn't like post")
+    }
   }
 
   return (

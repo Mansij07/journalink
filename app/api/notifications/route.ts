@@ -6,19 +6,34 @@ const SELECT =
   "id, type, read, created_at, post_id, project_id, application_id, actor:profiles!actor_id ( id, username, full_name, avatar_url )"
 
 /** The current user's latest notifications (most recent first). */
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { data } = await supabase
+  const { searchParams } = new URL(request.url)
+  const limitParam = searchParams.get("limit")
+  const offsetParam = searchParams.get("offset")
+
+  let query = supabase
     .from("notifications")
     .select(SELECT)
     .eq("recipient_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(50)
+
+  // Paginate when a limit is given; otherwise keep the default 50 for callers
+  // (like the full-page list) that fetch without params.
+  const limit = limitParam ? Number(limitParam) : null
+  if (limit && limit > 0) {
+    const offset = offsetParam ? Number(offsetParam) : 0
+    query = query.range(offset, offset + limit - 1)
+  } else {
+    query = query.limit(50)
+  }
+
+  const { data } = await query
 
   return NextResponse.json({ notifications: data ?? [] })
 }

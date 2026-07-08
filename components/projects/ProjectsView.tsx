@@ -18,6 +18,11 @@ import { useStaggerReveal } from "@/lib/animations"
 import { ProjectCard } from "@/components/projects/ProjectCard"
 import { ProjectForm } from "@/components/projects/ProjectForm"
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -37,11 +42,24 @@ interface ProjectsViewProps {
 export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProps) {
   const [formOpen, setFormOpen] = React.useState(false)
   const [page, setPage] = React.useState(1)
+  const [search, setSearch] = React.useState("")
 
-  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE))
+  const query = search.trim().toLowerCase()
+  const filtered = query
+    ? projects.filter((p) => {
+        const prof = p.profiles
+        return (
+          p.title.toLowerCase().includes(query) ||
+          (prof?.full_name?.toLowerCase().includes(query) ?? false) ||
+          (prof?.username?.toLowerCase().includes(query) ?? false)
+        )
+      })
+    : projects
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
-  const pageProjects = projects.slice(start, start + PAGE_SIZE)
+  const pageProjects = filtered.slice(start, start + PAGE_SIZE)
 
   const gridRef = useStaggerReveal<HTMLDivElement>(currentPage)
 
@@ -114,68 +132,94 @@ export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProp
           </div>
         ) : (
           <>
-            <div
-              ref={gridRef}
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              {pageProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+            <div className="mb-8 w-full max-w-sm">
+              <InputGroup className="w-full">
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupInput
+                  placeholder="Search by project or professor name..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setPage(1)
+                  }}
+                />
+              </InputGroup>
             </div>
 
-            {totalPages > 1 && (
-              <Pagination className="mt-10">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      aria-disabled={currentPage === 1}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      onClick={(e) => {
-                        e.preventDefault()
-                        goToPage(currentPage - 1)
-                      }}
-                    />
-                  </PaginationItem>
+            {filtered.length === 0 ? (
+              <div className="flex flex-1 items-center justify-center py-24">
+                <p className="text-md text-muted-foreground">
+                  No projects match your search.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div
+                  ref={gridRef}
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  {pageProjects.map((project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+                </div>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (p) => (
-                      <PaginationItem key={p}>
-                        <PaginationLink
+                {totalPages > 1 && (
+                  <Pagination className="mt-10">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
                           href="#"
-                          isActive={p === currentPage}
+                          aria-disabled={currentPage === 1}
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
                           onClick={(e) => {
                             e.preventDefault()
-                            goToPage(p)
+                            goToPage(currentPage - 1)
                           }}
-                        >
-                          {p}
-                        </PaginationLink>
+                        />
                       </PaginationItem>
-                    )
-                  )}
 
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      aria-disabled={currentPage === totalPages}
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      onClick={(e) => {
-                        e.preventDefault()
-                        goToPage(currentPage + 1)
-                      }}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (p) => (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              href="#"
+                              isActive={p === currentPage}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                goToPage(p)
+                              }}
+                            >
+                              {p}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={currentPage === totalPages}
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                          onClick={(e) => {
+                            e.preventDefault()
+                            goToPage(currentPage + 1)
+                          }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </>
             )}
           </>
         )}

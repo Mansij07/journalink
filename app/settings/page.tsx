@@ -5,7 +5,7 @@ import type { Profile } from "@/lib/types"
 import { getProfileById } from "@/lib/profile"
 import { Separator } from "@/components/ui/separator"
 import { ProfileSettingsForm } from "@/components/settings/ProfileSettingsForm"
-import { AppearanceAndAccount } from "@/components/settings/AppearanceAndAccount"
+import { AccountSettings } from "@/components/settings/AccountSettings"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -41,9 +41,9 @@ export default async function SettingsPage() {
 
         <section>
           <h2 className="mb-4 text-sm font-semibold tracking-[-0.01em] text-foreground">
-            Appearance &amp; Account
+            Account
           </h2>
-          <AppearanceAndAccount />
+          <AccountSettings />
         </section>
       </div>
     </div>

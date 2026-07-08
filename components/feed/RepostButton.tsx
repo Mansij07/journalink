@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Repeat2 } from "lucide-react"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -41,9 +42,19 @@ export function RepostButton({ postId, userId, initialCount = 0 }: RepostButtonP
     e.stopPropagation()
     if (!loaded) return
     const was = reposted
+    const prevCount = count
     setReposted(!was)
     setCount((c) => (was ? c - 1 : c + 1))
-    await fetch(`/api/posts/${postId}/reposts`, { method: was ? "DELETE" : "POST" })
+    try {
+      const res = await fetch(`/api/posts/${postId}/reposts`, {
+        method: was ? "DELETE" : "POST",
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setReposted(was) // revert
+      setCount(prevCount)
+      toast.error(was ? "Couldn't undo repost" : "Couldn't repost")
+    }
   }
 
   return (

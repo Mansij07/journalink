@@ -3,7 +3,6 @@ import Link from "next/link"
 import type { ProjectWithProfessor } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { SkillsRow } from "@/components/projects/SkillsRow"
 
 function professorOf(project: ProjectWithProfessor) {
   return project.profiles ?? null
@@ -15,8 +14,6 @@ export function ProjectCard({ project }: { project: ProjectWithProfessor }) {
   const initials = profName.slice(0, 2).toUpperCase()
   const isOpen = project.status === "Open"
 
-  const skills = project.skills ?? []
-
   return (
     <Link
       href={`/projects/${project.id}`}
@@ -25,7 +22,7 @@ export function ProjectCard({ project }: { project: ProjectWithProfessor }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           {project.type && (
-            <Badge variant="outline" className="font-normal text-xs h-6 px-2.5">
+            <Badge variant="warning" className="font-normal text-xs h-6 px-2.5">
               {project.type}
             </Badge>
           )}
@@ -39,7 +36,11 @@ export function ProjectCard({ project }: { project: ProjectWithProfessor }) {
         {project.title}
       </h3>
 
-      {skills.length > 0 && <SkillsRow skills={skills} />}
+      {project.description && (
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {project.description}
+        </p>
+      )}
 
       <div className="mt-auto flex items-center gap-2 border-t border-border pt-3">
         <Avatar size="sm">

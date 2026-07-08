@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import { Image as ImageIcon, Video, LayoutList, CalendarDays, X, FileText, Clock } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -177,10 +178,27 @@ export function PostComposer({ userId, username, avatarUrl, onPostCreated }: Pos
       const { error: msg } = await res.json().catch(() => ({ error: "Post failed" }))
       setError(msg ?? "Post failed")
     } else {
+      const { id } = await res.json().catch(() => ({ id: null }))
       setContent("")
       clearAttachments()
       setScheduledAt(null)
       onPostCreated()
+      toast.success(scheduledAt ? "Post scheduled" : "Posted", {
+        action: id
+          ? {
+              label: "Undo",
+              onClick: async () => {
+                const del = await fetch(`/api/posts/${id}`, { method: "DELETE" })
+                if (del.ok) {
+                  toast.success("Post deleted")
+                  onPostCreated()
+                } else {
+                  toast.error("Couldn't undo — post may already be gone")
+                }
+              },
+            }
+          : undefined,
+      })
     }
 
     setLoading(false)

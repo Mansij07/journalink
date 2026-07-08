@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Bookmark } from "lucide-react"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -39,7 +40,15 @@ export function BookmarkButton({ postId, userId }: BookmarkButtonProps) {
     if (!loaded) return
     const was = saved
     setSaved(!was)
-    await fetch(`/api/posts/${postId}/bookmarks`, { method: was ? "DELETE" : "POST" })
+    try {
+      const res = await fetch(`/api/posts/${postId}/bookmarks`, {
+        method: was ? "DELETE" : "POST",
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setSaved(was) // revert
+      toast.error(was ? "Couldn't remove bookmark" : "Couldn't save post")
+    }
   }
 
   return (

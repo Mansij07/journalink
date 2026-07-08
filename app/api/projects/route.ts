@@ -12,6 +12,7 @@ const ALLOWED_FIELDS = [
   "slots",
   "deadline",
   "status",
+  "resume_required",
 ] as const
 
 function pickFields(body: Record<string, unknown>) {

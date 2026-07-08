@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Search } from "lucide-react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { ProfileCard, type ProfileCardData } from "@/components/profile-card"
 
 type Profile = {
@@ -14,14 +13,6 @@ type Profile = {
   role: string
   avatar_url: string | null
   full_name: string | null
-}
-type Project = {
-  id: number
-  title: string
-  type: string
-  status: string
-  professor_id: string
-  profiles: { username: string }[] | { username: string } | null
 }
 
 interface ProfileClientProps {
@@ -40,7 +31,6 @@ export function ProfileClient({
 }: ProfileClientProps) {
   const [search, setSearch] = useState("")
   const [profiles, setProfiles] = useState<Profile[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
   const [open, setOpen] = useState(false)
   const [recent, setRecent] = useState<ProfileCardData[]>(initialRecent)
   const [followingSet, setFollowingSet] = useState<Set<string>>(new Set(followingIds))
@@ -112,16 +102,14 @@ export function ProfileClient({
     const timer = setTimeout(async () => {
       if (search.length === 0) {
         setProfiles([])
-        setProjects([])
         setOpen(false)
         return
       }
 
       const res = await fetch(`/api/search?q=${encodeURIComponent(search)}`)
       if (res.ok) {
-        const { profiles: profileData, projects: projectData } = await res.json()
+        const { profiles: profileData } = await res.json()
         setProfiles(profileData ?? [])
-        setProjects(projectData ?? [])
       }
       setOpen(true)
     }, 300)
@@ -138,7 +126,7 @@ export function ProfileClient({
               <Search />
             </InputGroupAddon>
             <InputGroupInput
-              placeholder="Search profiles or projects..."
+              placeholder="Search profiles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => search.length > 0 && setOpen(true)}
@@ -170,45 +158,7 @@ export function ProfileClient({
                 </div>
               )}
 
-              {profiles.length > 0 && projects.length > 0 && (
-                <Separator className="my-1" />
-              )}
-
-              {projects.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground px-3 pt-3 pb-1">Projects</p>
-                  {projects.map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.id}`}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer"
-                    >
-                      <div className="min-w-0">
-                        <span className="text-foreground text-sm">{project.title}</span>
-                        <span className="text-muted-foreground text-xs ml-2">
-                          {Array.isArray(project.profiles)
-                            ? project.profiles[0]?.username
-                            : project.profiles?.username}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Badge variant="secondary" className="text-xs">
-                          {project.type}
-                        </Badge>
-                        <Badge
-                          variant={project.status === "Open" ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {project.status}
-                        </Badge>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {profiles.length === 0 && projects.length === 0 && (
+              {profiles.length === 0 && (
                 <p className="text-muted-foreground text-sm px-3 py-4">No results found.</p>
               )}
             </div>

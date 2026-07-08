@@ -29,6 +29,7 @@ export interface Project {
   skills: string[] | null
   slots: number | null
   deadline: string | null
+  resume_required: boolean
   created_at: string | null
 }
 
@@ -50,6 +51,8 @@ export interface Application {
   project_id: number
   applicant_id: string
   message: string | null
+  decision_message: string | null
+  resume_url: string | null
   status: ApplicationStatus
   leave_requested: boolean
   created_at: string

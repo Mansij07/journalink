@@ -28,12 +28,34 @@ export async function getProfessorApplications(
     const { data } = await supabase
       .from("applications")
       .select(
-        "id, status, message, leave_requested, created_at, project!inner ( id, title, professor_id ), applicant:profiles!applicant_id ( id, username, full_name, avatar_url, role )"
+        "id, status, message, decision_message, resume_url, leave_requested, created_at, project!inner ( id, title, professor_id ), applicant:profiles!applicant_id ( id, username, full_name, avatar_url, role )"
       )
       .eq("project.professor_id", professorId)
       .order("created_at", { ascending: false })
     return (data as unknown as ProfessorApplication[]) ?? []
   })
+}
+
+/**
+ * Applications for a single one of a professor's projects, newest first.
+ * Guards on `project.professor_id` so a crafted projectId can't surface another
+ * professor's applications. Not cached — this view is opened on demand and must
+ * reflect accept/reject immediately (no per-project cache key to invalidate).
+ */
+export async function getProfessorApplicationsForProject(
+  supabase: SupabaseClient,
+  professorId: string,
+  projectId: number
+): Promise<ProfessorApplication[]> {
+  const { data } = await supabase
+    .from("applications")
+    .select(
+      "id, status, message, decision_message, resume_url, leave_requested, created_at, project!inner ( id, title, professor_id ), applicant:profiles!applicant_id ( id, username, full_name, avatar_url, role )"
+    )
+    .eq("project_id", projectId)
+    .eq("project.professor_id", professorId)
+    .order("created_at", { ascending: false })
+  return (data as unknown as ProfessorApplication[]) ?? []
 }
 
 /** A student's own applications, newest first. */
@@ -45,7 +67,7 @@ export async function getStudentApplications(
     const { data } = await supabase
       .from("applications")
       .select(
-        "id, status, message, leave_requested, created_at, project ( id, title, status, profiles!professor_id ( id, username, full_name, avatar_url ) )"
+        "id, status, message, decision_message, resume_url, leave_requested, created_at, project ( id, title, status, profiles!professor_id ( id, username, full_name, avatar_url ) )"
       )
       .eq("applicant_id", applicantId)
       .order("created_at", { ascending: false })

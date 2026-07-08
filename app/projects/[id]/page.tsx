@@ -3,8 +3,6 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CalendarDays, Users } from "lucide-react"
 
-import type { ApplicationStatus } from "@/lib/types"
-import { acceptCapForYear, getProfileById, isProfileComplete } from "@/lib/profile"
 import { getProjectById } from "@/lib/projects"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,46 +21,15 @@ export default async function ProjectDetailPage({
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
+  // Only the shared, cache-friendly project data is fetched server-side
+  // (Redis-cached, identical across viewers). Everything that depends on the
+  // current user lives in ProjectDetailActions, which loads its own state from
+  // /api/projects/[id]/viewer-state — so this render is light and reusable.
   const project = await getProjectById(supabase, id)
 
   if (!project) notFound()
 
   const typed = project
-  const isOwner = typed.professor_id === user.id
-
-  // Student: have they already applied? Owner: how many applications?
-  // Also load the viewer's profile to gate the Apply action.
-  const [
-    { data: myApplication },
-    { count: applicationCount },
-    { count: confirmedCount },
-    viewer,
-  ] = await Promise.all([
-    supabase
-      .from("applications")
-      .select("id, status")
-      .eq("project_id", typed.id)
-      .eq("applicant_id", user.id)
-      .maybeSingle(),
-    isOwner
-      ? supabase
-          .from("applications")
-          .select("*", { count: "exact", head: true })
-          .eq("project_id", typed.id)
-      : Promise.resolve({ count: 0 }),
-    // How many projects this viewer has already joined (drives the apply cap).
-    supabase
-      .from("applications")
-      .select("*", { count: "exact", head: true })
-      .eq("applicant_id", user.id)
-      .eq("status", "confirmed"),
-    getProfileById(supabase, user.id),
-  ])
-
-  const isStudent = (viewer?.role ?? "Student") !== "Prof"
-  const profileComplete = isProfileComplete(viewer ?? null)
-  const acceptCap = acceptCapForYear(viewer?.year)
-  const atCap = (confirmedCount ?? 0) >= acceptCap
 
   const prof = typed.profiles
   const profName = prof?.full_name || prof?.username || "Unknown"
@@ -81,7 +48,7 @@ export default async function ProjectDetailPage({
 
         <div className="flex flex-wrap items-center gap-1.5">
           {typed.type && (
-            <Badge variant="outline" className="font-normal">
+            <Badge variant="warning" className="font-normal">
               {typed.type}
             </Badge>
           )}
@@ -132,18 +99,7 @@ export default async function ProjectDetailPage({
         )}
 
         <div className="mt-6">
-          <ProjectDetailActions
-            project={typed}
-            userId={user.id}
-            isOwner={isOwner}
-            isStudent={isStudent}
-            profileComplete={profileComplete}
-            applied={!!myApplication}
-            applicationStatus={(myApplication?.status as ApplicationStatus) ?? null}
-            applicationCount={applicationCount ?? 0}
-            atCap={atCap}
-            acceptCap={acceptCap}
-          />
+          <ProjectDetailActions project={typed} />
         </div>
 
         <Separator className="my-8" />

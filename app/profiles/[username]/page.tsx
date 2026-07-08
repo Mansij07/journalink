@@ -6,16 +6,18 @@ import { BadgeCheck, GraduationCap, Pencil, Briefcase } from "lucide-react"
 import { acceptCapForYear, getProfileByUsername } from "@/lib/profile"
 import { getFollowCounts } from "@/lib/social"
 import { getOwnerProjects } from "@/lib/projects"
-import { getAuthorPosts } from "@/lib/posts"
+import { getStudentApplications } from "@/lib/applications"
+import { getAuthorPostsPage } from "@/lib/posts"
+import type { StudentApplication } from "@/components/applications/ApplicationsView"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { PostCard } from "@/components/feed/PostCard"
 import { FollowButton } from "@/components/profiles/FollowButton"
 import { ProfileProjects } from "@/components/profiles/ProfileProjects"
+import { ProfileApplications } from "@/components/profiles/ProfileApplications"
+import { ProfilePosts } from "@/components/profiles/ProfilePosts"
 import { FollowListDialog } from "@/components/profiles/FollowListDialog"
-import { StaggerContainer } from "@/components/StaggerContainer"
 
 export default async function ProfilePage({
   params,
@@ -39,9 +41,10 @@ export default async function ProfilePage({
   const [
     { followers, following },
     { data: followRow },
-    postList,
+    { posts: initialPosts, hasMore: postsHaveMore },
     projectList,
     { count: confirmedCount },
+    studentApplications,
   ] = await Promise.all([
     getFollowCounts(supabase, profile.id),
     isMe
@@ -52,7 +55,11 @@ export default async function ProfilePage({
           .eq("follower_id", user.id)
           .eq("following_id", profile.id)
           .maybeSingle(),
-    getAuthorPosts(supabase, profile.id),
+    // First page only — the rest load on scroll via ProfilePosts. Owner sees
+    // their own future-scheduled posts (includeScheduled = isMe).
+    isProf
+      ? getAuthorPostsPage(supabase, profile.id, 0, isMe)
+      : Promise.resolve({ posts: [], hasMore: false }),
     isProf
       ? getOwnerProjects(supabase, profile.id, true)
       : Promise.resolve([]),
@@ -64,16 +71,11 @@ export default async function ProfilePage({
           .eq("applicant_id", profile.id)
           .eq("status", "confirmed")
       : Promise.resolve({ count: 0 }),
+    // Own student profile: the full list of the student's applications.
+    isMe && !isProf
+      ? getStudentApplications(supabase, profile.id)
+      : Promise.resolve([] as StudentApplication[]),
   ])
-
-  // Scheduled-for-the-future posts are only shown on the owner's own profile.
-  const now = Date.now()
-  const visiblePosts = isMe
-    ? postList
-    : postList.filter((post) => {
-        const s = (post as { scheduled_at?: string | null }).scheduled_at
-        return !s || Date.parse(s) <= now
-      })
 
   const displayName = profile.full_name || profile.username || "Unknown"
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -189,6 +191,19 @@ export default async function ProfilePage({
           )}
         </div>
 
+        {/* Student's own applications (private — owner only) */}
+        {isMe && !isProf && studentApplications.length > 0 && (
+          <>
+            <Separator className="my-8" />
+            <section className="mb-10">
+              <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-foreground">
+                My Applications
+              </h2>
+              <ProfileApplications applications={studentApplications} />
+            </section>
+          </>
+        )}
+
         {isProf && <Separator className="my-8" />}
 
         {/* Professor's open projects */}
@@ -201,23 +216,19 @@ export default async function ProfilePage({
           </section>
         )}
 
-        {/* Posts — only professors can create posts, so students have none */}
+        {/* Posts — only professors can create posts, so students have none.
+            Loaded a page at a time on scroll to keep DB load light. */}
         {isProf && (
           <section>
             <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-foreground">
               Posts
             </h2>
-            {visiblePosts.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                No posts yet.
-              </p>
-            ) : (
-              <StaggerContainer revealKey={visiblePosts.length}>
-                {visiblePosts.map((post) => (
-                  <PostCard key={post.id} post={post} userId={user.id} />
-                ))}
-              </StaggerContainer>
-            )}
+            <ProfilePosts
+              authorId={profile.id}
+              viewerId={user.id}
+              initialPosts={initialPosts}
+              initialHasMore={postsHaveMore}
+            />
           </section>
         )}
       </div>

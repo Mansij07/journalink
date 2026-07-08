@@ -6,6 +6,7 @@ import { AutoLogout } from "@/components/AutoLogout";
 import { ConditionalNavbar } from "@/components/layout/ConditionalNavbar";
 import { ConditionalParticles } from "@/components/layout/ConditionalParticles";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Journalink",
@@ -24,16 +25,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
           <AutoLogout />
           <ConditionalParticles />
           <ConditionalNavbar />
-          {children}
+          <div className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+            {children}
+          </div>
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>

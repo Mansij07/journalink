@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import type { Project } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,9 @@ export function ProjectForm({
   const [slots, setSlots] = React.useState(project?.slots ? String(project.slots) : "")
   const [deadline, setDeadline] = React.useState(project?.deadline ?? "")
   const [status, setStatus] = React.useState<string>(project?.status ?? "Open")
+  const [resumeRequired, setResumeRequired] = React.useState(
+    project?.resume_required ?? false
+  )
 
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -67,6 +71,7 @@ export function ProjectForm({
     setSlots(project?.slots ? String(project.slots) : "")
     setDeadline(project?.deadline ?? "")
     setStatus(project?.status ?? "Open")
+    setResumeRequired(project?.resume_required ?? false)
     setError(null)
   }, [open, project])
 
@@ -91,6 +96,7 @@ export function ProjectForm({
       slots: slots ? Number(slots) : null,
       deadline: deadline || null,
       status,
+      resume_required: resumeRequired,
     }
 
     const res = isEdit
@@ -111,6 +117,30 @@ export function ProjectForm({
       const { error: msg } = await res.json().catch(() => ({ error: "Save failed" }))
       setError(msg ?? "Save failed")
       return
+    }
+
+    if (isEdit) {
+      toast.success("Project updated")
+    } else {
+      const { id } = await res.json().catch(() => ({ id: null }))
+      const createdTitle = title.trim()
+      toast.success("Project created", {
+        description: createdTitle,
+        action: id
+          ? {
+              label: "Undo",
+              onClick: async () => {
+                const del = await fetch(`/api/projects/${id}`, { method: "DELETE" })
+                if (del.ok) {
+                  toast.success("Project deleted")
+                  router.refresh()
+                } else {
+                  toast.error("Couldn't undo — project may already be gone")
+                }
+              },
+            }
+          : undefined,
+      })
     }
 
     onOpenChange(false)
@@ -226,6 +256,19 @@ export function ProjectForm({
                   placeholder="Pick a date"
                 />
               </Field>
+            </Field>
+
+            <Field orientation="horizontal">
+              <input
+                id="project-resume-required"
+                type="checkbox"
+                checked={resumeRequired}
+                onChange={(e) => setResumeRequired(e.target.checked)}
+                className="size-4 rounded border-input accent-primary"
+              />
+              <FieldLabel htmlFor="project-resume-required" className="font-normal">
+                Require a resume (PDF) with applications
+              </FieldLabel>
             </Field>
 
             {error && <FieldError>{error}</FieldError>}

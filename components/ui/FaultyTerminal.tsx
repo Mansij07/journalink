@@ -189,6 +189,12 @@ void main() {
     }
     
     vec2 p = uv * uScale;
+    // Keep digit cells square regardless of viewport aspect. The grid
+    // (uGridMul.x:uGridMul.y = 2:1) is designed for a 2:1 (landscape) viewport;
+    // correcting p.x by aspect/2 leaves a 2:1 screen unchanged and de-stretches
+    // tall (mobile) screens that would otherwise look distorted.
+    float aspectRatio = iResolution.x / iResolution.y;
+    p.x *= aspectRatio * 0.5;
     vec3 col = getColor(p);
 
     if(uChromaticAberration != 0.0){

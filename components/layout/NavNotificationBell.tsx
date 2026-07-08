@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Bell } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { NotificationsPopover } from "@/components/notifications/NotificationsPopover"
 
 /** How often to refresh the unread badge (ms). */
 const POLL_INTERVAL = 30_000
@@ -43,21 +44,44 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
     }
   }, [userId])
 
-  return (
-    <Link
-      href="/notifications"
-      aria-label={count > 0 ? `Notifications, ${count} unread` : "Notifications"}
-      className={cn(
-        "relative inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-        active && "text-foreground"
-      )}
-    >
+  const triggerClassName = cn(
+    "relative inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+    active && "text-foreground"
+  )
+  const ariaLabel = count > 0 ? `Notifications, ${count} unread` : "Notifications"
+
+  const bellInner = (
+    <>
       <Bell className="size-[18px]" />
       {count > 0 && (
         <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
           {count > 9 ? "9+" : count}
         </span>
       )}
-    </Link>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile: navigate to the full notifications page. */}
+      <Link
+        href="/notifications"
+        aria-label={ariaLabel}
+        className={cn(triggerClassName, "md:hidden")}
+      >
+        {bellInner}
+      </Link>
+
+      {/* Desktop: open a popover just below the bell. */}
+      <div className="hidden md:block">
+        <NotificationsPopover
+          trigger={
+            <button type="button" aria-label={ariaLabel} className={triggerClassName}>
+              {bellInner}
+            </button>
+          }
+        />
+      </div>
+    </>
   )
 }

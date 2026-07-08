@@ -12,6 +12,7 @@ const ALLOWED_FIELDS = [
   "slots",
   "deadline",
   "status",
+  "resume_required",
 ] as const
 
 /** Update a project the current user owns, then bust project caches. */
@@ -76,4 +77,36 @@ export async function PATCH(
 
   await invalidateProjects(user.id, id)
   return NextResponse.json(data)
+}
+
+/** Delete a project the current user owns (used to undo a create). */
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { data, error } = await supabase
+    .from("project")
+    .delete()
+    .eq("id", id)
+    .eq("professor_id", user.id)
+    .select("id")
+    .maybeSingle()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data) {
+    return NextResponse.json(
+      { error: "Project not found or you don't have permission to delete it." },
+      { status: 404 }
+    )
+  }
+
+  await invalidateProjects(user.id, id)
+  return NextResponse.json({ ok: true })
 }
