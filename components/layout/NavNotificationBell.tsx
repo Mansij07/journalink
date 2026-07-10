@@ -6,9 +6,10 @@ import { Bell } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover"
+import { useNotificationsRealtime } from "@/components/notifications/useNotificationsRealtime"
 
-/** How often to refresh the unread badge (ms). */
-const POLL_INTERVAL = 30_000
+/** Fallback poll interval (ms) — realtime pushes handle the common case. */
+const POLL_INTERVAL = 60_000
 
 interface NavNotificationBellProps {
   userId: string
@@ -18,18 +19,17 @@ interface NavNotificationBellProps {
 export function NavNotificationBell({ userId, active }: NavNotificationBellProps) {
   const [count, setCount] = React.useState(0)
 
+  const loadCount = React.useCallback(async () => {
+    const res = await fetch("/api/notifications/unread-count")
+    // Endpoint/table may be unavailable; fail soft.
+    if (res.ok) {
+      const { count: unread } = await res.json()
+      setCount(unread ?? 0)
+    }
+  }, [])
+
   React.useEffect(() => {
     if (!userId) return
-    let cancelled = false
-
-    const loadCount = async () => {
-      const res = await fetch("/api/notifications/unread-count")
-      // Endpoint/table may be unavailable; fail soft.
-      if (!cancelled && res.ok) {
-        const { count: unread } = await res.json()
-        setCount(unread ?? 0)
-      }
-    }
 
     loadCount()
     const timer = setInterval(loadCount, POLL_INTERVAL)
@@ -38,11 +38,14 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
     window.addEventListener("focus", onFocus)
 
     return () => {
-      cancelled = true
       clearInterval(timer)
       window.removeEventListener("focus", onFocus)
     }
-  }, [userId])
+  }, [userId, loadCount])
+
+  // Push updates: recompute the badge the instant a notification is
+  // inserted or marked read. Polling above is just a fallback.
+  useNotificationsRealtime(userId, loadCount)
 
   const triggerClassName = cn(
     "relative inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",

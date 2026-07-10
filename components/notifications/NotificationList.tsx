@@ -12,11 +12,12 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { NotificationRow, type NotificationItem } from "@/components/notifications/shared"
+import { useNotificationsRealtime } from "@/components/notifications/useNotificationsRealtime"
 
 export type { NotificationItem }
 
-/** How often to refresh the list (ms) — replaces the old realtime subscription. */
-const POLL_INTERVAL = 30_000
+/** Fallback poll interval (ms) — realtime pushes handle the common case. */
+const POLL_INTERVAL = 60_000
 
 export function NotificationList({
   initial,
@@ -35,7 +36,10 @@ export function NotificationList({
     }
   }, [])
 
-  // Poll for updates (replaces the old realtime subscription) + on focus.
+  // Realtime push: refetch the instant a notification arrives or is read.
+  useNotificationsRealtime(userId, refetch)
+
+  // Fallback poll + on-focus refetch in case the socket drops.
   React.useEffect(() => {
     const timer = setInterval(refetch, POLL_INTERVAL)
     const onFocus = () => refetch()

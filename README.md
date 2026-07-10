@@ -12,15 +12,54 @@ Journalink is a university-focused platform that bridges academic research and s
 
 ## Features
 
-- **Authentication** — Email/password and GitHub/Google OAuth via Supabase Auth, with a lightweight onboarding step (username + role) gated by middleware
-- **Password reset** — Custom forgot/reset-password flow using single-use tokens stored in Redis and delivered via Resend
-- **Profiles** — Full name, bio, branch, year, skills, and avatar (Supabase Storage), editable from Settings; role-based Student/Professor badge; follower/following counts
-- **Projects** — Professors create and manage research projects (title, type, description, requirements, skills, slots, deadline); students browse open projects and apply; projects auto-close when the deadline passes or slots fill up
-- **Applications** — End-to-end pipeline: apply → professor accepts/rejects → student confirms or declines the offer, with a year-based cap on how many projects a student can confirm
-- **Feed & Posts** — Composer with @mentions, image/video/document attachments, and post scheduling; likes, comments (with like/dislike), reposts, and bookmarks; infinite-scroll pagination; a global search bar covering both profiles and projects
-- **Notifications** — In-app notifications for likes, follows, comments, mentions, and application events, refreshed via polling (every 30s + on window focus)
+### Accounts & Onboarding
+
+- **Sign up / sign in** — Email + password, or one-click GitHub / Google OAuth via Supabase Auth
+- **Onboarding** — New users pick a username and a role (Student or Professor); a middleware gate ensures onboarding is complete before accessing the app
+- **Password reset** — Custom forgot/reset-password flow using single-use tokens stored in Redis and delivered by email via Resend
+- **Session security** — Sessions re-validated on every request at the edge; unauthenticated users are redirected to login
+
+### Profiles & Social Graph
+
+- **Rich profiles** — Full name, bio, branch, year, skills, and avatar, all editable from Settings
+- **Role badges** — Student / Professor badge shown across the app
+- **Follow system** — Follow and unfollow users; live follower / following counts
+- **Discovery** — Browse and search profiles across campus
+
+### Research Projects
+
+- **Post projects** — Professors create research projects with a title, type, description, requirements, required skills, number of slots, and a deadline
+- **Manage projects** — Edit, track, and review applicants from a dedicated management view
+- **Browse & apply** — Students discover open projects and apply in a click
+- **Auto-close** — Projects close automatically when the deadline passes or all slots are filled
+
+### Applications Pipeline
+
+- **End-to-end flow** — Apply → professor accepts or rejects → student confirms or declines the offer
+- **Confirmation cap** — A year-based limit on how many projects a student can confirm, enforced server-side
+- **Status tracking** — Students see the live status of every application; professors review all applicants in one place
+
+### Feed & Posts
+
+- **Composer** — Write posts with @mentions, image / video / document attachments, and optional scheduling for later
+- **Engagement** — Like, comment (with like / dislike on comments), repost, and bookmark
+- **Infinite scroll** — Feed paginates seamlessly as you scroll
+- **Permalinks** — Every post has its own shareable page
+
+### Search & Notifications
+
+- **Global search** — A single search bar covering both profiles and projects
+- **Real-time notifications** — Instant in-app alerts for likes, follows, comments, mentions, and application events, pushed over Supabase Realtime (WebSocket) with a poll fallback — see [Real-time Notifications](#real-time-notifications)
+
+### Personalization
+
+- **Settings** — Manage profile, appearance, and account from one place
+- **Themes** — Light / dark mode support
+
+### Under the Hood
+
 - **Caching** — Redis (ioredis) cache-aside layer in front of profiles, projects, feed pages, and search, with explicit invalidation on writes
-- **File Storage** — Supabase Storage for avatars and post media, with server-derived, per-user upload paths
+- **File storage** — Supabase Storage for avatars and post media, with server-derived, per-user upload paths
 
 ---
 
@@ -119,7 +158,34 @@ A `confirm_application` Postgres function handles offer confirmation server-side
 
 ---
 
+## Real-time Notifications
+
+Notifications are pushed to the client over **Supabase Realtime** — a WebSocket connection that streams Postgres changes straight to the browser. There is no custom socket server (the app runs on Vercel's serverless platform, which has no long-lived process to host one).
+
+**How it works:**
+
+1. Postgres triggers insert rows into the `notifications` table when a user is liked, followed, commented on, mentioned, or their application changes state.
+2. On the client, the `useNotificationsRealtime` hook (`components/notifications/useNotificationsRealtime.ts`) opens a Realtime channel and subscribes to `INSERT`/`UPDATE` events on the `notifications` table, filtered to `recipient_id = <current user>`.
+3. The nav bell badge (`NavNotificationBell`) and the full list (`NotificationList`) refetch the instant an event arrives, so updates appear within about a second — no refresh needed.
+4. A 60-second poll plus an on-window-focus refetch stay in place as a fallback if the socket drops.
+
+Delivery respects Row Level Security, so a client only ever receives its own notifications.
+
+**Supabase setup (one-time, in the dashboard):**
+
+```sql
+-- 1. Add the table to the Realtime publication so changes are broadcast
+alter publication supabase_realtime add table public.notifications;
+
+-- 2. Ensure an RLS policy lets a user read their own notifications
+--    (Realtime delivery is gated by the same SELECT policy)
+create policy "Users read own notifications"
+  on public.notifications for select
+  using (recipient_id = auth.uid());
+```
+
+---
+
 ## Notes
 
-- Notifications are polling-based, not push/realtime.
 - The Resend sender currently uses Resend's shared sandbox domain, which only delivers to the account owner — a verified custom domain is needed before password-reset emails reach real users.
