@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: journalink-config
+  namespace: journalink
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  # In-cluster Redis service DNS (see redis.yaml). ioredis connects over TCP.
+  REDIS_URL: "redis://redis:6379"
+  # Public anon URL — safe to keep here (also baked into the image at build time).
+  NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co"

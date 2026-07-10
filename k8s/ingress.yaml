@@ -1,0 +1,27 @@
+# Requires an ingress controller in the cluster (e.g. ingress-nginx).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: journalink
+  namespace: journalink
+  annotations:
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: journalink.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: journalink
+                port:
+                  number: 80
+  # Uncomment for TLS via cert-manager:
+  # tls:
+  #   - hosts:
+  #       - journalink.example.com
+  #     secretName: journalink-tls

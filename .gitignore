@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# kubernetes — real secret (copied from secret.yaml.example), never commit
+/k8s/secret.yaml
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

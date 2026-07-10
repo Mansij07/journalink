@@ -74,7 +74,7 @@ Journalink is a university-focused platform that bridges academic research and s
 | Backend & Auth | Supabase (PostgreSQL + Auth + Storage) |
 | Caching | Redis (ioredis) |
 | Email | Resend |
-| Deployment | Vercel |
+| Deployment | Vercel, or Docker / Kubernetes (see below) |
 
 ---
 
@@ -114,6 +114,75 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Docker & Kubernetes
+
+The app ships with a multi-stage `Dockerfile` (Next.js standalone output → ~150 MB image), a
+`docker-compose.yml` for a local prod-like stack (app + Redis), and raw Kubernetes manifests under
+`k8s/`. Supabase and Resend remain external managed services; **Redis runs in-cluster**.
+
+### Build-time vs runtime environment (important)
+
+`NEXT_PUBLIC_*` variables are **inlined into the client bundle at build time**, so they must be
+passed as Docker **build args**. The server-only secrets are injected at **runtime**:
+
+| Variable | When it's needed | How it's provided |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | build **and** runtime | `--build-arg` + env |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | build time | `--build-arg` |
+| `SUPABASE_SERVICE_ROLE_KEY` | runtime | env / K8s Secret |
+| `REDIS_URL` | runtime | env / K8s ConfigMap |
+| `RESEND_API_KEY` | runtime | env / K8s Secret |
+
+### Docker (single container)
+
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+  -t journalink:local .
+
+docker run --rm -p 3000:3000 --env-file .env.local journalink:local
+```
+
+### Docker Compose (app + Redis)
+
+Starts the app and a persistent Redis. This project keeps env vars in `.env.local`,
+but Compose only auto-loads `.env`, so pass the file explicitly:
+
+```bash
+docker compose --env-file .env.local up --build
+```
+
+### Kubernetes
+
+Manifests live in `k8s/` (namespace, ConfigMap, Secret, in-cluster Redis StatefulSet, app
+Deployment, Service, Ingress, HPA).
+
+```bash
+# 1. Push your image to a registry and set it in k8s/deployment.yaml
+#    (replace `your-registry/journalink:latest`).
+
+# 2. Create the real secret (don't commit values). `k8s/secret.yaml.example` is a
+#    template that is NOT applied by `kubectl apply -f k8s/`, so it can't overwrite
+#    this secret:
+kubectl create namespace journalink
+kubectl -n journalink create secret generic journalink-secrets \
+  --from-literal=SUPABASE_SERVICE_ROLE_KEY='...' \
+  --from-literal=RESEND_API_KEY='...'
+
+# 3. Set NEXT_PUBLIC_SUPABASE_URL in k8s/configmap.yaml, then apply everything else:
+kubectl apply -f k8s/
+
+# 4. Check status / reach the app:
+kubectl -n journalink get pods,svc,ingress
+kubectl -n journalink port-forward svc/journalink 8080:80
+```
+
+The `Ingress` assumes an ingress controller (e.g. ingress-nginx) and the `HPA` assumes
+metrics-server; both are optional for a local minikube/kind run.
 
 ---
 

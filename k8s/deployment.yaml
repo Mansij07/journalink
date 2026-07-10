@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: journalink
+  namespace: journalink
+  labels:
+    app: journalink
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: journalink
+  template:
+    metadata:
+      labels:
+        app: journalink
+    spec:
+      containers:
+        - name: journalink
+          # Push your built image to a registry and set it here.
+          image: your-registry/journalink:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: journalink-config
+            - secretRef:
+                name: journalink-secrets
+          # /login is a public page that returns 200 (verified), so readiness does
+          # a real HTTP check — traffic only routes once the app actually serves.
+          # Liveness stays a cheap TCP check to avoid restart loops on transient
+          # page errors.
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
