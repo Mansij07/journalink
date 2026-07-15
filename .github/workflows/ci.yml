@@ -1,0 +1,128 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Safe to be public (they're inlined into the client bundle anyway). Set
+  # real values as repo Variables (Settings → Secrets and variables → Actions
+  # → Variables) once you have a Supabase project; until then these
+  # placeholders keep the build green.
+  NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Runtime-only secrets — never read at build time, but the modules
+          # that reference them still need to import cleanly.
+          SUPABASE_SERVICE_ROLE_KEY: placeholder
+          RESEND_API_KEY: placeholder
+          REDIS_URL: redis://localhost:6379
+
+  docker:
+    name: Build & push image
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image name (ghcr.io requires lowercase)
+        id: image
+        run: echo "name=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # New GHCR packages default to private, which a cluster can't pull from
+      # without an imagePullSecret. Simplest fix for a portfolio project:
+      # after the first push, go to the package's GitHub settings and make it
+      # public. See README for the imagePullSecret alternative.
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No cluster yet, or haven't added the secret? Skip instead of failing,
+      # so the pipeline stays green until you're ready to wire up a real
+      # cluster. See README for how to create KUBE_CONFIG.
+      - name: Check for cluster credentials
+        id: check
+        run: |
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "::warning::KUBE_CONFIG secret not set — skipping deploy. See README's CI/CD section."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up kubeconfig
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      # Requires cert-manager already installed in the cluster (k8s/cluster-issuer.yaml
+      # is a ClusterIssuer CRD instance) — see README before the first real deploy.
+      - name: Apply manifests
+        if: steps.check.outputs.configured == 'true'
+        run: kubectl apply -f k8s/
+
+      - name: Roll out the new image
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          kubectl -n journalink set image deployment/journalink journalink=${{ needs.docker.outputs.image }}:${{ github.sha }}
+          kubectl -n journalink rollout status deployment/journalink --timeout=120s
