@@ -50,6 +50,10 @@ export function FollowListDialog({ userId, type, count, label, isOwn }: FollowLi
   React.useEffect(() => {
     if (!open) return
     let cancelled = false
+    // Shows a loading state immediately, ahead of the fetch below resolving —
+    // not the cascading-render pattern this rule targets. No effect-free
+    // alternative for "fetch on open" without a data-fetching library.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setQuery("")
     fetch(`/api/follows/list?userId=${userId}&type=${type}`)

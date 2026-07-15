@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 interface LeftSidebarProps {
+  // Loosely typed throughout the UI — shape varies by caller's query embed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profile: any
   followersCount: number
   followingCount: number

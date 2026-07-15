@@ -18,6 +18,8 @@ interface Suggestion {
 }
 
 interface FeedLayoutProps {
+  // Loosely typed throughout the UI — shape varies by caller's query embed.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   profile: any
   userId: string
   followersCount: number
@@ -26,11 +28,13 @@ interface FeedLayoutProps {
   suggestions: Suggestion[]
   followsYouIds: string[]
   initialPosts: any[]
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   initialHasMore: boolean
 }
 
 export function FeedLayout({ profile, userId, followersCount, followingCount, projectsCount, suggestions, followsYouIds, initialPosts, initialHasMore }: FeedLayoutProps) {
   const activeTab = "all" as const
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>(initialPosts)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(initialHasMore)

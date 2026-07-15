@@ -18,8 +18,11 @@ interface PostFullViewProps {
 
 export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
   const router = useRouter()
+  // Loosely typed throughout the UI — shape varies by caller's query embed.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [post, setPost] = useState<any>(null)
   const [comments, setComments] = useState<any[]>([])
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const [loading, setLoading] = useState(true)
   const [commentsError, setCommentsError] = useState(false)
 
@@ -47,6 +50,11 @@ export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
   }
 
   useEffect(() => {
+    // Fetches over the network and sets state only in the (async) response
+    // handler, not synchronously during the effect — not the cascading-render
+    // pattern this rule targets. No effect-free alternative for "fetch on
+    // mount, refetch on demand" without introducing a data-fetching library.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPostAndComments()
   }, [postId])
 

@@ -11,6 +11,8 @@ interface Suggestion {
 }
 
 interface FeedClientProps {
+  // Loosely typed throughout the UI — shape varies by caller's query embed.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   profile: any
   userId: string
   followersCount: number
@@ -19,6 +21,7 @@ interface FeedClientProps {
   suggestions: Suggestion[]
   followsYouIds: string[]
   initialPosts: any[]
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   initialHasMore: boolean
 }
 

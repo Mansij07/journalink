@@ -60,20 +60,27 @@ export function ProjectForm({
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  // Reset local state whenever a different project (or create) opens.
-  React.useEffect(() => {
-    if (!open) return
-    setTitle(project?.title ?? "")
-    setType(project?.type ?? "")
-    setDescription(project?.description ?? "")
-    setRequirements(project?.requirements ?? "")
-    setSkills((project?.skills ?? []).join(", "))
-    setSlots(project?.slots ? String(project.slots) : "")
-    setDeadline(project?.deadline ?? "")
-    setStatus(project?.status ?? "Open")
-    setResumeRequired(project?.resume_required ?? false)
-    setError(null)
-  }, [open, project])
+  // Reset local state whenever the dialog (re)opens for a different project
+  // (or create) — adjusting state during render (React's documented pattern
+  // for "resetting state when a prop changes") instead of in an effect, so
+  // there's no flash of the previous project's data.
+  const openKey = `${open}:${project?.id ?? "new"}`
+  const [prevOpenKey, setPrevOpenKey] = React.useState(openKey)
+  if (openKey !== prevOpenKey) {
+    setPrevOpenKey(openKey)
+    if (open) {
+      setTitle(project?.title ?? "")
+      setType(project?.type ?? "")
+      setDescription(project?.description ?? "")
+      setRequirements(project?.requirements ?? "")
+      setSkills((project?.skills ?? []).join(", "))
+      setSlots(project?.slots ? String(project.slots) : "")
+      setDeadline(project?.deadline ?? "")
+      setStatus(project?.status ?? "Open")
+      setResumeRequired(project?.resume_required ?? false)
+      setError(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

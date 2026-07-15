@@ -48,13 +48,24 @@ export function ApplyDialog({
   const [error, setError] = React.useState<string | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  React.useEffect(() => {
+  // Reset form state the moment `open` flips to true — adjusting state during
+  // render (React's documented pattern for "resetting state when a prop
+  // changes") instead of in an effect, so there's no flash of stale content.
+  const [prevOpen, setPrevOpen] = React.useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) {
       setMessage("")
       setResume(null)
       setError(null)
-      if (fileInputRef.current) fileInputRef.current.value = ""
     }
+  }
+
+  // The file input's value can only be cleared via a real DOM mutation, which
+  // must stay in an effect (it doesn't set any React state, so it isn't
+  // subject to the same rule).
+  React.useEffect(() => {
+    if (open && fileInputRef.current) fileInputRef.current.value = ""
   }, [open])
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

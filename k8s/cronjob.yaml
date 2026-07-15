@@ -1,0 +1,41 @@
+# Every 2 minutes, pokes the running app to invalidate cache entries for posts
+# whose schedule just passed, so scheduled posts show up promptly instead of
+# waiting out their cache TTL (see app/api/internal/publish-scheduled).
+#
+# The shared secret is passed as a command-line arg via Kubernetes' own
+# $(VAR) expansion (not a shell), which keeps it out of the image, but note it
+# is still visible via `kubectl get pods -o yaml` / `ps` inside the pod, same
+# as the Secret object itself — an acceptable tradeoff for an in-cluster call.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: journalink-publish-scheduled
+  namespace: journalink
+spec:
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 60
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: publish-scheduled
+              image: curlimages/curl:8.11.1
+              args:
+                - -sf
+                - -X
+                - POST
+                - -H
+                - "Authorization: Bearer $(CRON_SECRET)"
+                - http://journalink.journalink.svc.cluster.local/api/internal/publish-scheduled
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: journalink-secrets
+                      key: CRON_SECRET

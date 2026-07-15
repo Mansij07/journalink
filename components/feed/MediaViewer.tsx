@@ -36,11 +36,16 @@ export function MediaViewer({ items, index, onClose, onIndexChange }: MediaViewe
     onIndexChange((index + 1) % items.length)
   }, [index, items.length, onIndexChange])
 
-  // Reset zoom/pan whenever the displayed item changes
-  useEffect(() => {
+  // Reset zoom/pan whenever the displayed item changes — adjusting state
+  // during render (React's documented pattern for "resetting state when a
+  // prop changes") instead of in an effect, so there's no flash of the
+  // previous item's zoom/pan before it resets.
+  const [prevIndex, setPrevIndex] = useState(index)
+  if (index !== prevIndex) {
+    setPrevIndex(index)
     setScale(1)
     setOffset({ x: 0, y: 0 })
-  }, [index])
+  }
 
   useEffect(() => {
     if (!isOpen) return

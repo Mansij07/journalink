@@ -1,3 +1,8 @@
+// This WebGL/shader integration (raw `ogl` primitives, uniform objects, GLSL
+// strings) predates strict typing here and isn't safe to fully type without
+// visual regression testing against the shader itself — kept as a scoped,
+// intentional opt-out rather than pretending it type-checks.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 "use client"
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
@@ -257,7 +262,16 @@ export default function FaultyTerminal({
   const frozenTimeRef = useRef(0);
   const rafRef = useRef(0);
   const loadAnimationStartRef = useRef(0);
-  const timeOffsetRef = useRef(Math.random() * 100);
+  // Lazily initialize on first render only (React's documented pattern for
+  // an expensive/impure ref value) rather than calling Math.random() as a
+  // useRef() argument, which gets evaluated on every render.
+  const timeOffsetRef = useRef(null);
+  if (timeOffsetRef.current === null) {
+    // Guarded to run once per mount — safe, but the linter can't statically
+    // prove that from the runtime check above.
+    // eslint-disable-next-line react-hooks/purity
+    timeOffsetRef.current = Math.random() * 100;
+  }
 
   const tintVec = useMemo(() => hexToRgb(tint), [tint]);
 

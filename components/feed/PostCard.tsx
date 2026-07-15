@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface PostCardProps {
+  // Shape varies by caller's query embed (profiles, media, etc.) — loosely typed
+  // throughout the UI on purpose, matching lib/posts.ts's PostRow.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   post: any
   userId?: string
   onPostClick?: (id: string) => void
@@ -30,6 +33,9 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
   const router = useRouter()
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [expanded, setExpanded] = useState(false)
+  // Snapshot once per mount rather than calling Date.now() during render — this
+  // component has no ticking interval, so it never needed to be "live" anyway.
+  const [renderedAt] = useState(() => Date.now())
 
   const content: string = post.content ?? ""
   const isLong = content.length > CONTENT_LIMIT
@@ -49,7 +55,7 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
   // Only the author ever receives a scheduled-in-the-future post (enforced server-side),
   // so show a "Scheduled" marker in place of the live timestamp when one exists.
   const scheduledAt: string | null = post.scheduled_at ?? null
-  const isScheduled = !!scheduledAt && new Date(scheduledAt).getTime() > Date.now()
+  const isScheduled = !!scheduledAt && new Date(scheduledAt).getTime() > renderedAt
 
   const profile = post.profiles
   const displayName = profile?.full_name || profile?.username || "Unknown"

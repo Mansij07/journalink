@@ -1,11 +1,12 @@
-# Requires an ingress controller in the cluster (e.g. ingress-nginx).
+# Requires an ingress controller (e.g. ingress-nginx) and cert-manager with the
+# ClusterIssuer from k8s/cluster-issuer.yaml already applied.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: journalink
   namespace: journalink
   annotations:
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: selfsigned-issuer
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
@@ -20,8 +21,10 @@ spec:
                 name: journalink
                 port:
                   number: 80
-  # Uncomment for TLS via cert-manager:
-  # tls:
-  #   - hosts:
-  #       - journalink.example.com
-  #     secretName: journalink-tls
+  # cert-manager watches this Ingress and issues journalink-tls from the
+  # selfsigned-issuer ClusterIssuer. Swap the issuer + host when moving to a
+  # real domain (see k8s/cluster-issuer.yaml).
+  tls:
+    - hosts:
+        - journalink.example.com
+      secretName: journalink-tls

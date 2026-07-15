@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { isOnboardingComplete, resolveGateRedirect } from '@/lib/authGate'
+import { logger } from '@/lib/logger'
+
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next()
 
@@ -21,37 +24,25 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  if (!user) {
-    // Not logged in → only allow login, signup, auth routes
-    if (!path.startsWith('/login') && !path.startsWith('/signup') && !path.startsWith('/auth') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password')) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    return response
+  let onboardingComplete = false
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, role')
+      .eq('id', user.id)
+      .single()
+    onboardingComplete = isOnboardingComplete(profile, user)
   }
 
-  // User is logged in → check if onboarding is complete
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, role')
-    .eq('id', user.id)
-    .single()
+  const redirectTo = resolveGateRedirect({
+    path,
+    isAuthenticated: Boolean(user),
+    onboardingComplete,
+  })
 
-  // Check if user is OAuth (no email provider)
-  const isOAuthUser = user.app_metadata?.provider !== 'email'
-
-  const onboardingComplete = profile && (
-    !isOAuthUser || // email users skip onboarding
-    (profile.username !== user.email?.split('@')[0] && profile.role !== null)
-  )
-
-  if (!onboardingComplete && !path.startsWith('/onboarding') && !path.startsWith('/auth')) {
-    // Logged in but onboarding not done → go to onboarding
-    return NextResponse.redirect(new URL('/onboarding', request.url))
-  }
-
-  if (onboardingComplete && (path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/onboarding'))) {
-    // Onboarding done → don't let them go back to login/signup/onboarding
-    return NextResponse.redirect(new URL('/feed', request.url))
+  if (redirectTo) {
+    logger.info('auth gate redirect', { path, redirectTo })
+    return NextResponse.redirect(new URL(redirectTo, request.url))
   }
 
   return response

@@ -18,17 +18,20 @@ export function RelativeTime({
   dateString: string
   className?: string
 }) {
-  const [text, setText] = React.useState(() => formatRelativeTime(dateString))
+  // `text` is derived straight from `dateString` + the current time at render
+  // — no state needed to keep them in sync. The interval just forces a
+  // re-render every minute so the derived value gets recomputed; it never
+  // calls a setter that holds the value itself.
+  const [, forceTick] = React.useReducer((c: number) => c + 1, 0)
 
   React.useEffect(() => {
-    setText(formatRelativeTime(dateString))
-    const id = setInterval(() => setText(formatRelativeTime(dateString)), 60_000)
+    const id = setInterval(forceTick, 60_000)
     return () => clearInterval(id)
-  }, [dateString])
+  }, [])
 
   return (
     <span className={className} suppressHydrationWarning>
-      {text}
+      {formatRelativeTime(dateString)}
     </span>
   )
 }

@@ -1,0 +1,31 @@
+# Requires cert-manager installed in the cluster, e.g.:
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml
+#
+# A self-signed issuer needs no real domain, DNS, or HTTP challenge — it works
+# on minikube/kind out of the box, which is why it's the default here. Browsers
+# will show a "not trusted" warning for the resulting cert; that's expected for
+# local/portfolio use. To move to a real domain later, replace this file's
+# `selfSigned: {}` issuer with an ACME issuer such as:
+#
+#   apiVersion: cert-manager.io/v1
+#   kind: ClusterIssuer
+#   metadata:
+#     name: letsencrypt-prod
+#   spec:
+#     acme:
+#       server: https://acme-v02.api.letsencrypt.org/directory
+#       email: you@example.com
+#       privateKeySecretRef:
+#         name: letsencrypt-prod-key
+#       solvers:
+#         - http01:
+#             ingress:
+#               ingressClassName: nginx
+#
+# ...and update k8s/ingress.yaml's cluster-issuer annotation + host to match.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}

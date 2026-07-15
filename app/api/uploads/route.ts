@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
+import { rateLimit } from "@/lib/rateLimit"
 
 const BUCKETS = ["avatars", "post-media", "resumes"] as const
 type Bucket = (typeof BUCKETS)[number]
@@ -36,6 +37,14 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { allowed, retryAfterSeconds } = await rateLimit(`uploads:${user.id}`, 20, 5 * 60)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many uploads. Please wait a bit." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+    )
+  }
 
   let form: FormData
   try {

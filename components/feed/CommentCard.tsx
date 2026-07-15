@@ -7,6 +7,8 @@ import { CommentReactions } from "./CommentReactions"
 import { renderWithMentions } from "@/lib/mentions"
 
 interface CommentCardProps {
+  // Loosely typed throughout the UI — shape varies by caller's query embed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   comment: any
   userId?: string
 }

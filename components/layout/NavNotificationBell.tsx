@@ -31,6 +31,11 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
   React.useEffect(() => {
     if (!userId) return
 
+    // Fetches over the network and sets state only in the (async) response
+    // handler, not synchronously during the effect — not the cascading-render
+    // pattern this rule targets. No effect-free alternative for "fetch on
+    // mount, then poll" without a data-fetching library.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadCount()
     const timer = setInterval(loadCount, POLL_INTERVAL)
     // Refresh when the tab regains focus, so the badge feels current.

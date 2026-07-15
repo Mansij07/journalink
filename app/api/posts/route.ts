@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { createClient } from "@/lib/supabase/server"
 import { getAuthorPostsPage, invalidateFeedAndAuthor } from "@/lib/posts"
+import { rateLimit } from "@/lib/rateLimit"
 
 /** One cached page of a single author's posts. `?author=` required, `?page=` defaults to 0. */
 export async function GET(request: Request) {
@@ -33,6 +34,14 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { allowed, retryAfterSeconds } = await rateLimit(`posts:create:${user.id}`, 10, 5 * 60)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "You're posting too fast. Please wait a bit." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+    )
+  }
 
   let body: { content?: unknown; media?: unknown; scheduledAt?: unknown }
   try {

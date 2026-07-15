@@ -4,6 +4,8 @@ import { randomUUID } from "crypto"
 import { redis } from "@/lib/redis"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { rateLimit } from "@/lib/rateLimit"
+import { logger } from "@/lib/logger"
 
 const TOKEN_TTL_SECONDS = 60 * 60 // 1 hour
 
@@ -32,6 +34,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
   }
 
+  // Keyed by the target email (not the caller) — the goal is to stop one
+  // address from being email-bombed, regardless of how many IPs request it.
+  const { allowed } = await rateLimit(`pwreset-request:${email}`, 5, 15 * 60)
+  if (!allowed) {
+    // Same generic response as every other outcome — a 429 here would leak
+    // that this email has been requested repeatedly.
+    return genericOk()
+  }
+
   try {
     const admin = createAdminClient()
 
@@ -55,7 +66,7 @@ export async function POST(request: Request) {
 
     return genericOk()
   } catch (err) {
-    console.error("forgot-password error:", err)
+    logger.error("forgot-password failed", { error: err instanceof Error ? err.message : String(err) })
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }
