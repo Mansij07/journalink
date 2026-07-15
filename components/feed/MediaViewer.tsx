@@ -185,6 +185,13 @@ export function MediaViewer({ items, index, onClose, onIndexChange }: MediaViewe
         style={{ cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
       >
         {media.type === "image" ? (
+          // next/image's automatic sizing/srcset model is a poor fit for this
+          // full-screen lightbox: `scale`/`offset` drive an inline CSS
+          // transform for interactive zoom/pan, which needs the element to be
+          // a plain <img> at its natural size rather than wrapped by next/image's
+          // own layout box. The optimization win also doesn't apply here — the
+          // full-resolution image is exactly what a zoomed-in lightbox needs.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             key={media.url}
             src={media.url}

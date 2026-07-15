@@ -108,7 +108,6 @@ export default async function ProfilePage({
             ) : (
               <FollowButton
                 targetId={profile.id}
-                currentUserId={user.id}
                 initialFollowing={!!followRow}
               />
             )}

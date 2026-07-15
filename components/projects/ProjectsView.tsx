@@ -36,10 +36,9 @@ const PAGE_SIZE = 9
 interface ProjectsViewProps {
   projects: ProjectWithProfessor[]
   isProf: boolean
-  professorId: string
 }
 
-export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProps) {
+export function ProjectsView({ projects, isProf }: ProjectsViewProps) {
   const [formOpen, setFormOpen] = React.useState(false)
   const [page, setPage] = React.useState(1)
   const [search, setSearch] = React.useState("")
@@ -229,7 +228,6 @@ export function ProjectsView({ projects, isProf, professorId }: ProjectsViewProp
         <ProjectForm
           open={formOpen}
           onOpenChange={setFormOpen}
-          professorId={professorId}
         />
       )}
     </div>

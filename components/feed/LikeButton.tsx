@@ -34,6 +34,10 @@ export function LikeButton({ postId, userId, initialCount = 0 }: LikeButtonProps
 
     load()
     return () => { cancelled = true }
+    // `initialCount` is intentionally excluded: it's a mount-time seed used
+    // only as a fallback if the fetch response omits a count. Including it
+    // would refetch every time the parent's optimistic count changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId, userId])
 
   const toggleLike = async (e: React.MouseEvent) => {

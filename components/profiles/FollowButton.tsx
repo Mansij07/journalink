@@ -7,13 +7,11 @@ import { Button } from "@/components/ui/button"
 
 interface FollowButtonProps {
   targetId: string
-  currentUserId: string
   initialFollowing: boolean
 }
 
 export function FollowButton({
   targetId,
-  currentUserId,
   initialFollowing,
 }: FollowButtonProps) {
   const router = useRouter()

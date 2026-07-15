@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Maximize2, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MediaItem } from "./MediaViewer"
@@ -16,7 +17,14 @@ function Tile({ item, onClick, className }: { item: MediaItem; onClick: () => vo
       onClick={(e) => { e.stopPropagation(); onClick() }}
     >
       {item.type === "image" ? (
-        <img src={item.url} alt="" className="w-full h-full object-cover" draggable={false} />
+        <Image
+          src={item.url}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 600px"
+          className="object-cover"
+          draggable={false}
+        />
       ) : (
         <>
           <video src={item.url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
@@ -47,10 +55,14 @@ export function MediaCollage({ items, onOpen }: MediaCollageProps) {
         onClick={(e) => { e.stopPropagation(); onOpen(0) }}
       >
         {item.type === "image" ? (
-          <img
+          <Image
             src={item.url}
             alt="Post attachment"
+            width={1200}
+            height={800}
+            sizes="(max-width: 768px) 100vw, 600px"
             className="max-h-[420px] max-w-full w-auto object-contain block"
+            style={{ width: "auto", height: "auto" }}
             draggable={false}
           />
         ) : (

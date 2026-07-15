@@ -36,7 +36,6 @@ export function useStaggerReveal<T extends HTMLElement>(dep?: unknown) {
     }, el)
 
     return () => ctx.revert()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dep])
 
   return ref
@@ -64,7 +63,6 @@ export function useFadeUp<T extends HTMLElement>(dep?: unknown) {
     }, el)
 
     return () => ctx.revert()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dep])
 
   return ref

@@ -35,7 +35,6 @@ export function CommentReactions({ commentId, userId }: CommentReactionsProps) {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commentId, userId])
 
   const react = async (value: "like" | "dislike") => {

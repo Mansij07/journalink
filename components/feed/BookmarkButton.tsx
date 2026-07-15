@@ -32,7 +32,6 @@ export function BookmarkButton({ postId, userId }: BookmarkButtonProps) {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId, userId])
 
   const toggle = async (e: React.MouseEvent) => {

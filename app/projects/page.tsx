@@ -22,6 +22,6 @@ export default async function ProjectsPage() {
     : await getOpenProjects(supabase)
 
   return (
-    <ProjectsView projects={projects} isProf={isProf} professorId={user.id} />
+    <ProjectsView projects={projects} isProf={isProf} />
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { PostCard } from "./PostCard"
 import { CommentInput } from "./CommentInput"
@@ -29,7 +29,7 @@ export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
   const goBack =
     onBack ?? (() => (window.history.length > 1 ? router.back() : router.push("/feed")))
 
-  const fetchPostAndComments = async () => {
+  const fetchPostAndComments = useCallback(async () => {
     setLoading(true)
     setCommentsError(false)
 
@@ -47,7 +47,7 @@ export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
     }
 
     setLoading(false)
-  }
+  }, [postId])
 
   useEffect(() => {
     // Fetches over the network and sets state only in the (async) response
@@ -56,7 +56,7 @@ export function PostFullView({ postId, userId, onBack }: PostFullViewProps) {
     // mount, refetch on demand" without introducing a data-fetching library.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPostAndComments()
-  }, [postId])
+  }, [fetchPostAndComments])
 
   if (loading) {
     return (

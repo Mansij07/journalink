@@ -74,7 +74,6 @@ export function ProjectDetailActions({ project }: { project: ProjectWithProfesso
         <ProjectForm
           open={editOpen}
           onOpenChange={setEditOpen}
-          professorId={state.userId}
           project={project}
         />
       </>

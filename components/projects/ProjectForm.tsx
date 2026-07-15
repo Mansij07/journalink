@@ -28,7 +28,6 @@ import {
 interface ProjectFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  professorId: string
   /** When provided, the form edits this project instead of creating one. */
   project?: Project
 }
@@ -39,7 +38,6 @@ const selectClassName =
 export function ProjectForm({
   open,
   onOpenChange,
-  professorId,
   project,
 }: ProjectFormProps) {
   const router = useRouter()
