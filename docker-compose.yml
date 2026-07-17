@@ -1,24 +1,13 @@
-# Local prod-like stack: the Next.js app + an in-container Redis.
-# Supabase and Resend stay external — only their keys are passed in.
-#
-# This project keeps env vars in .env.local, but Compose only auto-loads `.env`,
-# so run it with an explicit env file:
-#
-#   docker compose --env-file .env.local up --build
-#
-# (Never commit real env values.)
 services:
   app:
     build:
       context: .
       args:
-        # NEXT_PUBLIC_* are baked in at build time.
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     ports:
       - "3000:3000"
     environment:
-      # Server-only secrets, injected at runtime.
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
@@ -31,7 +20,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    # Persist data (Redis holds cache + single-use password-reset tokens).
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
@@ -41,6 +29,5 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
-
 volumes:
   redis-data:
