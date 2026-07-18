@@ -15,10 +15,14 @@ const globalForRedis = globalThis as unknown as { redis?: Redis }
 export const redis =
   globalForRedis.redis ??
   new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
-    // Fail fast instead of queueing forever if Redis is unreachable, so the
-    // caller can fall back to the database.
     maxRetriesPerRequest: 2,
-    enableOfflineQueue: false,
+    // Bound how long any single command can wait — including one issued
+    // during the brief handshake right after the process boots, which the
+    // offline queue (left enabled, its default) absorbs instead of throwing
+    // synchronously. Without this, `enableOfflineQueue: false` used to reject
+    // that first command outright, which silently defeated call sites like
+    // the rate limiter that fail open on any Redis error.
+    commandTimeout: 1000,
     // Cap reconnect attempts instead of retrying forever when Redis is down
     // (e.g. not running locally in dev).
     retryStrategy: (times) => (times > 10 ? null : Math.min(times * 200, 2000)),

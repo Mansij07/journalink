@@ -4,11 +4,6 @@ import { createClient } from "@/lib/supabase/server"
 import { getPostById, invalidateFeedAndAuthor } from "@/lib/posts"
 import { getProfileById } from "@/lib/profile"
 
-/**
- * A single post with its author profile attached (for the full-post view).
- * The post row is Redis-cached (`post:{id}`); the author profile comes from the
- * separately cached `getProfileById` so profile edits reflect immediately.
- */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

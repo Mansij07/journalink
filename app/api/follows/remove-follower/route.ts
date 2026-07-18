@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server"
-
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { invalidateFollow } from "@/lib/social"
 
-/**
- * Force-remove one of the current user's followers: delete the follows row where
- * `follower_id = followerId` and `following_id = <current user>`. RLS only lets a
- * user delete rows they authored (their own follows), so the followee can't do
- * this with the normal client — we use the service-role admin client, but scope
- * the delete to `following_id = user.id` so a user can only ever remove their own
- * followers.
- */
-export async function POST(request: Request) {
+export async function POST(request: Request) {      // it's structured as an action/RPC-style endpoint (body-driven).
   const supabase = await createClient()
   const {
     data: { user },
@@ -30,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "followerId required" }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createAdminClient()          // this service-role key is Postgres's "ignore RLS entirely" credential 
   const { error } = await admin
     .from("follows")
     .delete()

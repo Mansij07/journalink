@@ -17,7 +17,6 @@ export async function GET(request: Request) {
   if (!author) return NextResponse.json({ error: "author required" }, { status: 400 })
   const page = Math.max(0, Number(url.searchParams.get("page")) || 0)
 
-  // Only the author sees their own future-scheduled posts.
   const includeScheduled = author === user.id
   const result = await getAuthorPostsPage(supabase, author, page, includeScheduled)
   return NextResponse.json(result)
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
     )
   }
 
-  let body: { content?: unknown; media?: unknown; scheduledAt?: unknown }
+  let body: { content?: unknown; media?: unknown; scheduledAt?: unknown }       // not const because it's assigned inside the try block below, not at declaration.
   try {
     body = await request.json()
   } catch {
