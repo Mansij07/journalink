@@ -57,7 +57,6 @@ export async function getFollowingIds(
   })
 }
 
-/** A profile usable as an @-mention target. */
 export interface MentionCandidate {
   id: string
   username: string | null
@@ -65,12 +64,6 @@ export interface MentionCandidate {
   avatar_url: string | null
 }
 
-/**
- * Candidate pool for @-mention autocomplete: the profiles `userId` follows. The
- * client filters this by the typed query. Cached per-user (`mentions:{userId}`)
- * and busted by `invalidateFollow` when the follow set changes; a followed
- * user's rename goes slightly stale until the TTL — acceptable for autocomplete.
- */
 export async function getMentionCandidates(
   supabase: SupabaseClient,
   userId: string
@@ -91,11 +84,6 @@ export async function getMentionCandidates(
   })
 }
 
-/**
- * The profiles who follow `userId` (their followers). Two queries (ids from
- * `follows`, then the profile rows) — no PostgREST embed — and uncached so the
- * list reflects follow/remove changes immediately.
- */
 export async function getFollowersProfiles(
   supabase: SupabaseClient,
   userId: string
@@ -107,7 +95,6 @@ export async function getFollowersProfiles(
   return profilesForIds(supabase, (rows ?? []).map((r) => r.follower_id))
 }
 
-/** The profiles `userId` follows. Same shape/approach as getFollowersProfiles. */
 export async function getFollowingProfiles(
   supabase: SupabaseClient,
   userId: string
@@ -119,7 +106,6 @@ export async function getFollowingProfiles(
   return profilesForIds(supabase, (rows ?? []).map((r) => r.following_id))
 }
 
-/** Fetch the given profile ids as `Suggestion` rows (order not guaranteed). */
 async function profilesForIds(
   supabase: SupabaseClient,
   ids: string[]
@@ -190,10 +176,10 @@ export async function getSuggestions(
     const suggestionIds = (suggestions ?? []).map((s) => s.id)
     const { data: followsYouRows } = suggestionIds.length
       ? await supabase
-          .from("follows")
-          .select("follower_id")
-          .eq("following_id", userId)
-          .in("follower_id", suggestionIds)
+        .from("follows")
+        .select("follower_id")
+        .eq("following_id", userId)
+        .in("follower_id", suggestionIds)
       : { data: [] }
 
     return {
