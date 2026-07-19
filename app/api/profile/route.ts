@@ -3,7 +3,6 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getProfileById, invalidateProfile } from "@/lib/profile"
 
-/** The current user's profile (served from the Redis cache). */
 export async function GET() {
   const supabase = await createClient()
   const {
@@ -16,10 +15,8 @@ export async function GET() {
   return NextResponse.json(profile)
 }
 
-/** Username handle rule: letters, numbers, underscores only (URL-safe), 3–30 chars. */
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/
 
-/** Fields a user is allowed to change on their own profile. */
 const ALLOWED_FIELDS = [
   "full_name",
   "bio",
@@ -29,16 +26,8 @@ const ALLOWED_FIELDS = [
   "avatar_url",
   "username",
   "role",
-] as const
+] as const         // Without as const, TypeScript would infer this as string[]
 
-/**
- * Update the current user's profile, then bust its Redis cache entries.
- *
- * This is the server-side seam the client forms lacked: profile writes used to
- * go straight from the browser to Supabase, so nothing could call the
- * server-only `invalidateProfile`. The cookie-bound Supabase client keeps RLS
- * in force, so a user can still only update their own row.
- */
 export async function PATCH(request: Request) {
   const supabase = await createClient()
   const {
@@ -60,8 +49,7 @@ export async function PATCH(request: Request) {
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
   }
-  // Usernames are URL handles (/profiles/[username]), so they must be URL-safe:
-  // letters, numbers, and underscores only — no spaces or other characters.
+  
   if ("username" in updates) {
     const u = typeof updates.username === "string" ? updates.username.trim() : ""
     if (!USERNAME_RE.test(u)) {

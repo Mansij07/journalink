@@ -15,7 +15,7 @@ const ALLOWED_FIELDS = [
   "resume_required",
 ] as const
 
-function pickFields(body: Record<string, unknown>) {
+function pickFields(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const key of ALLOWED_FIELDS) {
     if (key in body) out[key] = body[key]
@@ -23,7 +23,6 @@ function pickFields(body: Record<string, unknown>) {
   return out
 }
 
-/** Create a project owned by the current user, then bust project caches. */
 export async function POST(request: Request) {
   const supabase = await createClient()
   const {
@@ -43,13 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 })
   }
 
-  // Auto-close on creation when the deadline is already past or slots are 0.
-  if (
-    shouldAutoClose(
-      fields.deadline as string | null | undefined,
-      fields.slots as number | null | undefined
-    )
-  ) {
+  if (shouldAutoClose(fields.deadline as string | null | undefined, fields.slots as number | null | undefined)) {
     fields.status = "Closed"
   }
 

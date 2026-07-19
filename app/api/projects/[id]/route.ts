@@ -15,7 +15,14 @@ const ALLOWED_FIELDS = [
   "resume_required",
 ] as const
 
-/** Update a project the current user owns, then bust project caches. */
+function pickFields(body: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const key of ALLOWED_FIELDS) {
+    if (key in body) out[key] = body[key]
+  }
+  return out
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -34,17 +41,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const updates: Record<string, unknown> = {}
-  for (const key of ALLOWED_FIELDS) {
-    if (key in body) updates[key] = body[key]
-  }
+  const updates = pickFields(body)
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 })
   }
 
-  // When the edit touches deadline/slots, auto-close if the new values are
-  // already past/exhausted — this also prevents manually re-opening an expired
-  // project. A partial edit that omits both is left to the read-time sweep.
   if (
     ("deadline" in updates || "slots" in updates) &&
     shouldAutoClose(
@@ -55,10 +56,6 @@ export async function PATCH(
     updates.status = "Closed"
   }
 
-  // Ownership is enforced both here (professor_id) and by RLS. maybeSingle()
-  // returns null (rather than throwing "cannot coerce…") when no row matches —
-  // e.g. the project doesn't exist, isn't owned by the user, or an RLS UPDATE
-  // policy blocked the write.
   const { data, error } = await supabase
     .from("project")
     .update(updates)
@@ -79,7 +76,6 @@ export async function PATCH(
   return NextResponse.json(data)
 }
 
-/** Delete a project the current user owns (used to undo a create). */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

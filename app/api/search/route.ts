@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { cacheGetOrSet, ServiceUnavailableError } from "@/lib/redis"
 import { rateLimit } from "@/lib/rateLimit"
 
-const SEARCH_TTL = 2 * 60 // popular prefixes stay warm ~2 min
+const SEARCH_TTL = 2 * 60 
 
 /** Typeahead over profiles. `?q=` is required; results are cached. */
 export async function GET(request: Request) {
