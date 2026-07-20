@@ -6,19 +6,13 @@ import { cacheGetOrSet, cacheDelete } from "@/lib/redis"
 import { invalidateProjectCount } from "@/lib/social"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-const LIST_TTL = 5 * 60 // open/owner lists — a few minutes
-const DETAIL_TTL = 15 * 60 // a single project changes rarely
+const LIST_TTL = 5 * 60 
+const DETAIL_TTL = 15 * 60 
 
-/** Today's date as "yyyy-MM-dd" (UTC) — matches the DatePicker's stored format. */
 export function todayStr(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-/**
- * A project must be auto-closed when its deadline is strictly before today
- * (applyable through the deadline day) or it has a defined, non-positive slot
- * count. Idempotent: callers only ever flip an Open project to Closed.
- */
 export function shouldAutoClose(
   deadline: string | null | undefined,
   slots: number | null | undefined
@@ -28,12 +22,6 @@ export function shouldAutoClose(
   return false
 }
 
-/**
- * Close every Open project whose deadline has passed or whose slots hit 0.
- * Uses the service-role client because RLS restricts `UPDATE project` to the
- * owning professor, but this sweep runs on any viewer's read. The `lt`/`lte`
- * filters never match NULL, so null deadlines / null slots are left Open.
- */
 export async function closeExpiredProjects(): Promise<void> {
   const admin = createAdminClient()
   const { data } = await admin
@@ -42,7 +30,6 @@ export async function closeExpiredProjects(): Promise<void> {
     .eq("status", "Open")
     .or(`deadline.lt.${todayStr()},slots.lte.0`)
     .select("id, professor_id")
-
   for (const row of (data ?? []) as { id: number; professor_id: string }[]) {
     await invalidateProjects(row.professor_id, row.id)
   }
@@ -55,7 +42,6 @@ const projectKey = (id: string | number) => `project:${id}`
 const PROJECT_SELECT =
   "*, profiles!professor_id ( id, username, full_name, avatar_url, role )"
 
-/** All open projects with their professor — identical for every student → global key. */
 export async function getOpenProjects(
   supabase: SupabaseClient
 ): Promise<ProjectWithProfessor[]> {
@@ -70,7 +56,6 @@ export async function getOpenProjects(
   })
 }
 
-/** A professor's own projects (any status). */
 export async function getOwnerProjects(
   supabase: SupabaseClient,
   profId: string,
@@ -93,7 +78,6 @@ export async function getOwnerProjects(
   )
 }
 
-/** A single project + its professor. Per-viewer fields (applications) are NOT cached here. */
 export async function getProjectById(
   supabase: SupabaseClient,
   id: string | number
@@ -109,11 +93,6 @@ export async function getProjectById(
   })
 }
 
-/**
- * Bust every cache touched by creating/updating/deleting a project: the global
- * open list, the owner's lists (both variants), the detail entry (if known),
- * and the owner's project count.
- */
 export async function invalidateProjects(
   profId: string,
   projectId?: string | number

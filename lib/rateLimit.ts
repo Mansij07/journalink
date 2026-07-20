@@ -10,10 +10,6 @@ export interface RateLimitResult {
   retryAfterSeconds: number
 }
 
-// Atomic fixed-window counter: INCR the window's key, set its expiry only on
-// the first hit in that window. Runs as a single EVAL so concurrent requests
-// sharing a key never race between the INCR and the expiry set (two requests
-// landing in the same millisecond must still agree on one counter value).
 const INCR_AND_EXPIRE = `
 local current = redis.call("INCR", KEYS[1])
 if tonumber(current) == 1 then
@@ -21,14 +17,6 @@ if tonumber(current) == 1 then
 end
 return current
 `
-
-/**
- * Fixed-window rate limiter keyed by `key` (typically a user id, scoped per
- * route by the caller), allowing up to `limit` calls per `windowSeconds`.
- * Fails open (allows the request) if Redis is unavailable — availability of
- * the app takes priority over strict limiting, the same tradeoff already made
- * for caching in `lib/redis.ts`.
- */
 export async function rateLimit(
   key: string,
   limit: number,

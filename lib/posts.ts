@@ -4,17 +4,16 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { cacheGetOrSet, cacheDelete, cacheDeleteByPrefix } from "@/lib/redis"
 
 const FEED_BATCH_SIZE = 10
-const AUTHOR_BATCH_SIZE = 5 // profile posts load a small page at a time on scroll
-const FEED_TTL = 45 // feed should feel fresh
+const AUTHOR_BATCH_SIZE = 5
+const FEED_TTL = 45
 const AUTHOR_POSTS_TTL = 5 * 60
-const POST_TTL = 60 * 60 // a post's own content is effectively immutable
+const POST_TTL = 60 * 60 
 
 const feedPageKey = (page: number) => `feed:page:${page}`
 const authorPostsPageKey = (authorId: string, page: number, own: boolean) =>
   `posts:author:${authorId}:${own ? "own" : "page"}:${page}`
 const postKey = (id: string) => `post:${id}`
 
-// Posts are loosely shaped throughout the UI (PostCard takes `post: any`).
 type PostRow = { id: string; author_id: string; [key: string]: unknown }
 
 export interface FeedPage {
@@ -22,11 +21,6 @@ export interface FeedPage {
   hasMore: boolean
 }
 
-/**
- * One page of the global feed (newest first), with each post's author profile
- * attached. Mirrors the two-query approach the client used, but cached under a
- * global key since the feed is not personalized.
- */
 export async function getFeedPage(
   supabase: SupabaseClient,
   page: number
@@ -35,7 +29,6 @@ export async function getFeedPage(
     const from = page * FEED_BATCH_SIZE
     const to = from + FEED_BATCH_SIZE - 1
 
-    // Hide posts scheduled for the future; unscheduled posts have scheduled_at null.
     const { data: postRows, error } = await supabase
       .from("post")
       .select("*")
@@ -60,14 +53,6 @@ export async function getFeedPage(
   })
 }
 
-/**
- * One page of a single author's posts (newest first), with their profile
- * attached — for infinite scroll on profile pages. Same two-query approach as
- * `getFeedPage`: every post shares one author, so the profile is fetched once
- * and attached as `profiles` (the shape PostCard expects). When
- * `includeScheduled` is false (a non-owner viewer), future-scheduled posts are
- * hidden, mirroring the feed.
- */
 export async function getAuthorPostsPage(
   supabase: SupabaseClient,
   authorId: string,
@@ -111,12 +96,6 @@ export async function getAuthorPostsPage(
   )
 }
 
-/**
- * A single post's own row (content/media/author_id), cached. The author profile
- * is intentionally NOT embedded here — callers attach it via the separately
- * cached `getProfileById`, so profile edits show up immediately. Comments are
- * never cached (they stay live).
- */
 export async function getPostById(
   supabase: SupabaseClient,
   id: string
@@ -127,12 +106,10 @@ export async function getPostById(
   })
 }
 
-/** Bust a single post's cached row (call on post edit/delete). */
 export async function invalidatePost(id: string): Promise<void> {
   await cacheDelete(postKey(id))
 }
 
-/** Bust all feed pages and the author's paginated post lists after a new/changed post. */
 export async function invalidateFeedAndAuthor(authorId: string): Promise<void> {
   await cacheDeleteByPrefix("feed:page:")
   await cacheDeleteByPrefix(`posts:author:${authorId}:`)

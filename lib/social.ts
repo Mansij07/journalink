@@ -146,11 +146,6 @@ export interface SuggestionsResult {
   followsYouIds: string[]
 }
 
-/**
- * "Who to follow" for `userId`: profiles they don't already follow (Professors
- * first), plus which of those already follow the user (for "Follow Back").
- * Per-user — keyed by `userId`.
- */
 export async function getSuggestions(
   supabase: SupabaseClient,
   userId: string
@@ -189,10 +184,6 @@ export async function getSuggestions(
   })
 }
 
-/**
- * Bust caches affected when `followerId` (un)follows `followingId`: both users'
- * follow counts, and the follower's suggestion list (the target leaves/returns).
- */
 export async function invalidateFollow(
   followerId: string,
   followingId: string
@@ -206,15 +197,10 @@ export async function invalidateFollow(
   )
 }
 
-/** Bust a professor's project count (after create/delete of a project). */
 export async function invalidateProjectCount(profId: string): Promise<void> {
   await cacheDelete(projectCountKey(profId))
 }
 
-/**
- * Profiles `userId` recently searched/viewed, most recent first. Redis-cached
- * per-user (`recent:{userId}`), busted on record/clear.
- */
 export async function getRecentSearches(
   supabase: SupabaseClient,
   userId: string
@@ -238,7 +224,6 @@ export async function getRecentSearches(
   })
 }
 
-/** Record that `userId` viewed `viewedId` (upsert refreshes recency), bust cache. */
 export async function recordRecentSearch(
   supabase: SupabaseClient,
   userId: string,
@@ -257,7 +242,6 @@ export async function recordRecentSearch(
   await cacheDelete(recentKey(userId))
 }
 
-/** Clear all of `userId`'s recent searches, bust cache. */
 export async function clearRecentSearches(
   supabase: SupabaseClient,
   userId: string

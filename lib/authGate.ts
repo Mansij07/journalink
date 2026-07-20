@@ -1,6 +1,5 @@
 import "server-only"
 
-/** Paths reachable without a session — auth flows plus the custom password-reset pages. */
 const PUBLIC_UNAUTHENTICATED_PREFIXES = [
   "/login",
   "/signup",
@@ -19,12 +18,6 @@ export interface GateUser {
   app_metadata?: { provider?: string } | null
 }
 
-/**
- * A profile is "onboarded" once it has a real username and role. Email/password
- * signups collect both at signup time, so any profile row for them counts as
- * complete. OAuth signups get an auto-created row (username defaulted to the
- * email's local part, role null) and must go through /onboarding to replace it.
- */
 export function isOnboardingComplete(
   profile: ProfileRow | null | undefined,
   user: GateUser
@@ -41,12 +34,6 @@ export interface AuthGateInput {
   onboardingComplete: boolean
 }
 
-/**
- * Pure routing decision for the auth/onboarding gate: given where a request is
- * headed and the caller's auth/onboarding state, returns the path to redirect
- * to, or `null` to let the request through unchanged. Kept free of Next.js/
- * Supabase types so it's unit-testable without mocking either.
- */
 export function resolveGateRedirect({
   path,
   isAuthenticated,
