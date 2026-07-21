@@ -26,7 +26,6 @@ export default async function FeedPage() {
     getFollowCounts(supabase, user.id),
     getProjectCount(supabase, user.id),
     getSuggestions(supabase, user.id),
-    // First feed page, server-rendered (Redis-cached) so posts paint immediately.
     getFeedPage(supabase, 0),
   ])
 
