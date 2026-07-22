@@ -34,6 +34,7 @@ export function ProfileClient({
   const [open, setOpen] = useState(false)
   const [recent, setRecent] = useState<ProfileCardData[]>(initialRecent)
   const [followingSet, setFollowingSet] = useState<Set<string>>(new Set(followingIds))
+  const [searchUnavailable, setSearchUnavailable] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   async function toggleFollow(id: string) {
@@ -103,11 +104,18 @@ export function ProfileClient({
       if (search.length === 0) {
         setProfiles([])
         setOpen(false)
+        setSearchUnavailable(false)
         return
       }
 
       const res = await fetch(`/api/search?q=${encodeURIComponent(search)}`)
-      if (res.ok) {
+      if (res.status === 503) {
+        // Circuit breaker open on the backend — say so, rather than showing
+        // "No results found" for what isn't actually an empty result.
+        setSearchUnavailable(true)
+        setProfiles([])
+      } else if (res.ok) {
+        setSearchUnavailable(false)
         const { profiles: profileData } = await res.json()
         setProfiles(profileData ?? [])
       }
@@ -159,7 +167,11 @@ export function ProfileClient({
               )}
 
               {profiles.length === 0 && (
-                <p className="text-muted-foreground text-sm px-3 py-4">No results found.</p>
+                <p className="text-muted-foreground text-sm px-3 py-4">
+                  {searchUnavailable
+                    ? "Search is temporarily unavailable. Try again shortly."
+                    : "No results found."}
+                </p>
               )}
             </div>
           )}

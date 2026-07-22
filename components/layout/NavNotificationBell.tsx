@@ -8,9 +8,7 @@ import { cn } from "@/lib/utils"
 import { NotificationsPopover } from "@/components/notifications/NotificationsPopover"
 import { useNotificationsRealtime } from "@/components/notifications/useNotificationsRealtime"
 
-/** Fallback poll interval (ms) — realtime pushes handle the common case. */
 const POLL_INTERVAL = 60_000
-
 interface NavNotificationBellProps {
   userId: string
   active?: boolean
@@ -18,10 +16,8 @@ interface NavNotificationBellProps {
 
 export function NavNotificationBell({ userId, active }: NavNotificationBellProps) {
   const [count, setCount] = React.useState(0)
-
   const loadCount = React.useCallback(async () => {
     const res = await fetch("/api/notifications/unread-count")
-    // Endpoint/table may be unavailable; fail soft.
     if (res.ok) {
       const { count: unread } = await res.json()
       setCount(unread ?? 0)
@@ -30,15 +26,8 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
 
   React.useEffect(() => {
     if (!userId) return
-
-    // Fetches over the network and sets state only in the (async) response
-    // handler, not synchronously during the effect — not the cascading-render
-    // pattern this rule targets. No effect-free alternative for "fetch on
-    // mount, then poll" without a data-fetching library.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadCount()
     const timer = setInterval(loadCount, POLL_INTERVAL)
-    // Refresh when the tab regains focus, so the badge feels current.
     const onFocus = () => loadCount()
     window.addEventListener("focus", onFocus)
 
@@ -47,9 +36,6 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
       window.removeEventListener("focus", onFocus)
     }
   }, [userId, loadCount])
-
-  // Push updates: recompute the badge the instant a notification is
-  // inserted or marked read. Polling above is just a fallback.
   useNotificationsRealtime(userId, loadCount)
 
   const triggerClassName = cn(
@@ -71,7 +57,6 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
 
   return (
     <>
-      {/* Mobile: navigate to the full notifications page. */}
       <Link
         href="/notifications"
         aria-label={ariaLabel}
@@ -79,8 +64,6 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
       >
         {bellInner}
       </Link>
-
-      {/* Desktop: open a popover just below the bell. */}
       <div className="hidden md:block">
         <NotificationsPopover
           trigger={

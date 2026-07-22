@@ -41,6 +41,9 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  // Seconds until the next auto-retry, when the backend reports itself
+  // temporarily unavailable (503 + Retry-After) — null when not in that state.
+  const [serviceError, setServiceError] = useState<number | null>(null)
   // Page 0 is server-rendered/seeded — skip the initial client fetch.
   const seededRef = useRef(true)
 
@@ -59,12 +62,21 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
 
       try {
         const res = await fetch(`/api/feed?page=${page}`)
-        if (!res.ok) throw new Error("feed fetch failed")
-        const { posts: merged, hasMore: more } = await res.json()
 
-        if (!cancelled) {
-          setPosts((prev) => (page === 0 ? merged : [...prev, ...merged]))
-          setHasMore(Boolean(more))
+        if (res.status === 503) {
+          // Circuit breaker open on the backend — back off and retry once
+          // instead of treating this like an ordinary failure.
+          const retryAfter = Number(res.headers.get("Retry-After")) || 5
+          if (!cancelled) setServiceError(retryAfter)
+        } else if (!res.ok) {
+          throw new Error("feed fetch failed")
+        } else {
+          const { posts: merged, hasMore: more } = await res.json()
+          if (!cancelled) {
+            setServiceError(null)
+            setPosts((prev) => (page === 0 ? merged : [...prev, ...merged]))
+            setHasMore(Boolean(more))
+          }
         }
       } catch {
         // keep current state on error
@@ -79,6 +91,15 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
     load()
     return () => { cancelled = true }
   }, [activeTab, page, refreshKey, userId])
+
+  // Auto-retry once the backend's own Retry-After window has passed — bumping
+  // refreshKey re-runs the effect above for the same page, without resetting
+  // posts/hasMore the way a real "refresh" (handlePostCreated) would.
+  useEffect(() => {
+    if (serviceError == null) return
+    const timer = setTimeout(() => setRefreshKey((k) => k + 1), serviceError * 1000)
+    return () => clearTimeout(timer)
+  }, [serviceError])
 
   const handleLoadMore = useCallback(() => {
     if (!loadingMore && !loading && hasMore) setPage((p) => p + 1)
@@ -116,6 +137,11 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
         )}
 
         <div className={role === "Prof" ? "mt-4" : ""}>
+          {serviceError != null && (
+            <div className="mb-4 rounded-xl border border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+              Feed is temporarily unavailable. Retrying in {serviceError}s…
+            </div>
+          )}
           {loading ? (
             <FeedSkeleton count={5} />
           ) : posts.length === 0 ? (

@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation"
 import { Particles } from "@/components/ui/particles"
 
-// The auth pages have their own AnimatedBackground; everything after login gets particles.
 const hideParticleRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"]
 
 export function ConditionalParticles() {
