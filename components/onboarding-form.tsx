@@ -9,7 +9,6 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-/** Username handle rule (mirrors the server): letters, numbers, underscores, 3–30 chars. */
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/
 
 export default function OnboardingForm() {

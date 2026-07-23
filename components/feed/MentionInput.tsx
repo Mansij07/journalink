@@ -16,7 +16,6 @@ interface FollowedProfile {
 interface MentionInputProps {
   value: string
   onChange: (value: string) => void
-  /** The current user — suggestions come from accounts they follow. */
   currentUserId: string
   placeholder?: string
   rows?: number
@@ -39,7 +38,6 @@ export function MentionInput({
   const [query, setQuery] = React.useState("")
   const [tokenStart, setTokenStart] = React.useState(0)
 
-  // Load the people the user follows once.
   React.useEffect(() => {
     if (!currentUserId) return
     let cancelled = false
@@ -86,7 +84,6 @@ export function MentionInput({
     const next = `${value.slice(0, tokenStart)}@${username} ${value.slice(caret)}`
     onChange(next)
     setOpen(false)
-    // restore focus + caret after the inserted mention
     requestAnimationFrame(() => {
       if (!el) return
       const pos = tokenStart + username.length + 2
@@ -127,7 +124,6 @@ export function MentionInput({
               <button
                 key={p.id}
                 type="button"
-                // onMouseDown (not onClick) so it fires before the textarea blur closes the list
                 onMouseDown={(e) => {
                   e.preventDefault()
                   pick(p.username!)

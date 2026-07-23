@@ -19,7 +19,6 @@ export function AccountSettings() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Logout */}
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-foreground">Log out</p>

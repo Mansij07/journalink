@@ -80,22 +80,14 @@ function ApplicationDialogBody({
 }) {
   const router = useRouter()
   const [status, setStatus] = React.useState<ApplicationStatus>(application.status)
-  const [decisionMessage, setDecisionMessage] = React.useState(
-    application.decision_message
-  )
-  const [leaveRequested, setLeaveRequested] = React.useState(
-    application.leave_requested
-  )
+  const [decisionMessage, setDecisionMessage] = React.useState(application.decision_message)
+  const [leaveRequested, setLeaveRequested] = React.useState()
   const [note, setNote] = React.useState("")
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-
-  const capReached = confirmedCount >= acceptCap
+  const capReached:boolean = confirmedCount >= acceptCap
   const project = application.project
-  const counterparty =
-    "applicant" in application
-      ? application.applicant
-      : application.project?.profiles ?? null
+  const counterparty = "applicant" in application ? application.applicant : application.project?.profiles ?? null
   const name = counterparty?.full_name || counterparty?.username || "Unknown"
 
   const decide = async (next: "accepted" | "rejected") => {

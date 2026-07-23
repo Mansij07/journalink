@@ -17,29 +17,22 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface PostCardProps {
-  // Shape varies by caller's query embed (profiles, media, etc.) — loosely typed
-  // throughout the UI on purpose, matching lib/posts.ts's PostRow.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   post: any
   userId?: string
   onPostClick?: (id: string) => void
   isFullView?: boolean
 }
 
-// Feed posts longer than this are clamped with a "Show more" toggle (x.com-style).
 const CONTENT_LIMIT = 280
 
 export function PostCard({ post, userId = "", onPostClick, isFullView = false }: PostCardProps) {
   const router = useRouter()
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [expanded, setExpanded] = useState(false)
-  // Snapshot once per mount rather than calling Date.now() during render — this
-  // component has no ticking interval, so it never needed to be "live" anyway.
   const [renderedAt] = useState(() => Date.now())
 
   const content: string = post.content ?? ""
   const isLong = content.length > CONTENT_LIMIT
-  // Only the compact feed view truncates; the full post page always shows everything.
   const showTruncated = !isFullView && isLong && !expanded
   const displayContent = showTruncated
     ? content.slice(0, CONTENT_LIMIT).trimEnd()
@@ -52,8 +45,6 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
         ...(post.video_url ? [{ type: "video" as const, url: post.video_url }] : []),
       ]
 
-  // Only the author ever receives a scheduled-in-the-future post (enforced server-side),
-  // so show a "Scheduled" marker in place of the live timestamp when one exists.
   const scheduledAt: string | null = post.scheduled_at ?? null
   const isScheduled = !!scheduledAt && new Date(scheduledAt).getTime() > renderedAt
 
@@ -64,7 +55,6 @@ export function PostCard({ post, userId = "", onPostClick, isFullView = false }:
   const avatarUrl = profile?.avatar_url || null
   const initial = (displayName.charAt(0) || username.charAt(0) || "U").toUpperCase()
 
-  // Open the post: use the in-feed callback if given, otherwise navigate to its page.
   const goToPost = () => {
     if (onPostClick) onPostClick(post.id)
     else if (!isFullView) router.push(`/posts/${post.id}`)

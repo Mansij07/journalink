@@ -6,11 +6,6 @@ interface FeedShellProps {
   children: ReactNode
 }
 
-/**
- * The shared 3-column layout used by the feed and the single-post page: a
- * sticky left sidebar, a fluid main column, and a sticky right sidebar (both
- * sidebars hidden below the `xl` breakpoint).
- */
 export function FeedShell({ left, right, children }: FeedShellProps) {
   return (
     <div className="min-h-screen flex-1 text-foreground">

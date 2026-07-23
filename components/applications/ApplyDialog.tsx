@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-const MAX_RESUME_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_RESUME_BYTES = 5 * 1024 * 1024
 
 interface ApplyDialogProps {
   open: boolean
@@ -48,9 +48,6 @@ export function ApplyDialog({
   const [error, setError] = React.useState<string | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Reset form state the moment `open` flips to true — adjusting state during
-  // render (React's documented pattern for "resetting state when a prop
-  // changes") instead of in an effect, so there's no flash of stale content.
   const [prevOpen, setPrevOpen] = React.useState(open)
   if (open !== prevOpen) {
     setPrevOpen(open)
@@ -61,9 +58,6 @@ export function ApplyDialog({
     }
   }
 
-  // The file input's value can only be cleared via a real DOM mutation, which
-  // must stay in an effect (it doesn't set any React state, so it isn't
-  // subject to the same rule).
   React.useEffect(() => {
     if (open && fileInputRef.current) fileInputRef.current.value = ""
   }, [open])
@@ -101,12 +95,10 @@ export function ApplyDialog({
       fd.append("file", resume)
       fd.append("bucket", "resumes")
       fd.append("kind", "resume")
-      const uploadRes = await fetch("/api/uploads", { method: "POST", body: fd })
+      const uploadRes = await fetch("api/uploads", { method: "POST", body: fd })
       if (!uploadRes.ok) {
         setSubmitting(false)
-        const { error: msg } = await uploadRes
-          .json()
-          .catch(() => ({ error: "Resume upload failed" }))
+        const { error: msg } = await uploadRes.json().catch(() => ({ error: "Resume upload failed" }))
         setError(msg ?? "Resume upload failed")
         return
       }
@@ -132,17 +124,17 @@ export function ApplyDialog({
       description: projectTitle,
       action: id
         ? {
-            label: "Undo",
-            onClick: async () => {
-              const del = await fetch(`/api/applications/${id}`, { method: "DELETE" })
-              if (del.ok) {
-                toast.success("Application withdrawn")
-                router.refresh()
-              } else {
-                toast.error("Couldn't undo — it may already be reviewed")
-              }
-            },
-          }
+          label: "Undo",
+          onClick: async () => {
+            const del = await fetch(`/api/applications/${id}`, { method: "DELETE" })
+            if (del.ok) {
+              toast.success("Application withdrawn")
+              router.refresh()
+            } else {
+              toast.error("Couldn't undo — it may already be reviewed")
+            }
+          },
+        }
         : undefined,
     })
 

@@ -85,7 +85,7 @@ app/api/**/route.ts  (Route Handler)
 
 ### Notably absent
 
-- **No API versioning** — no `/api/v1` prefix or version header anywhere.
+- **Frontend not yet migrated to versioned paths** — real route logic lives under `app/api/v1/**/route.ts`; every original `app/api/**/route.ts` location is now a thin re-export shim (`export { GET, POST } from "@/app/api/v1/.../route"`) so all existing unversioned paths keep working byte-for-byte. The 51 `fetch('/api/...')` call sites across components and the two machine consumers (K8s CronJob, Prometheus) still call the unversioned paths by choice — see [§17](#17-known-gaps--conventions-worth-noting).
 - **No shared request-validation library** — no Zod/Joi/Yup; every route hand-rolls `typeof`/`Array.isArray` checks and field allow-lists.
 - **No centralized API auth middleware** — `proxy.ts` (Next's `middleware.ts`, renamed in this Next.js version) only gates **pages** (`/feed`, `/projects`, `/profiles`, `/notifications`, `/applications`, `/posts`, `/login`, `/signup`, `/onboarding`); every `/api/*` route independently calls `supabase.auth.getUser()`.
 - **No in-repo DB migrations** — schema changes are made directly in the Supabase dashboard.
@@ -711,7 +711,7 @@ There is no `.env.example` checked in; these are documented in `README.md` and e
 
 These are deliberate current-state tradeoffs, not necessarily bugs — worth knowing before extending the API:
 
-- **No API versioning scheme** — breaking a response shape today would break every current client with no migration path (no `/api/v1`, no version header).
+- **`/api/v1` exists but isn't yet the canonical client-facing path** — route logic was moved under `app/api/v1/**`, with the old `app/api/**` paths kept as permanent re-export shims for backward compatibility. The web app's 51 `fetch('/api/...')` call sites and the two machine consumers (`/api/internal/publish-scheduled`, `/api/metrics`) still target the unversioned paths; migrating them to call `/api/v1/*` explicitly (ideally through a shared client, since there isn't one) is a separate, not-yet-done step. A future breaking change would land as `app/api/v2/**` with `v1` kept alongside it.
 - **No shared request-validation library** — every route hand-rolls its own checks; adding Zod (or similar) would remove a lot of repeated boilerplate and reduce the chance of a missed edge case in a new route.
 - **No centralized API auth middleware** — the same `auth.getUser()` + 401 block is copy-pasted into all ~30 route files. A `withAuth()` helper would reduce duplication, though it would need to preserve the per-route access to both `supabase` and `user`.
 - **Schema lives only in the Supabase dashboard** — no in-repo migrations, so schema history/diffs aren't version-controlled alongside the code that depends on them.

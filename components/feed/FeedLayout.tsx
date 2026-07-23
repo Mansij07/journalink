@@ -18,8 +18,6 @@ interface Suggestion {
 }
 
 interface FeedLayoutProps {
-  // Loosely typed throughout the UI — shape varies by caller's query embed.
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   profile: any
   userId: string
   followersCount: number
@@ -28,23 +26,18 @@ interface FeedLayoutProps {
   suggestions: Suggestion[]
   followsYouIds: string[]
   initialPosts: any[]
-  /* eslint-enable @typescript-eslint/no-explicit-any */
   initialHasMore: boolean
 }
 
 export function FeedLayout({ profile, userId, followersCount, followingCount, projectsCount, suggestions, followsYouIds, initialPosts, initialHasMore }: FeedLayoutProps) {
   const activeTab = "all" as const
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>(initialPosts)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  // Seconds until the next auto-retry, when the backend reports itself
-  // temporarily unavailable (503 + Retry-After) — null when not in that state.
   const [serviceError, setServiceError] = useState<number | null>(null)
-  // Page 0 is server-rendered/seeded — skip the initial client fetch.
   const seededRef = useRef(true)
 
   const role = profile?.role || "Student"
@@ -64,8 +57,6 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
         const res = await fetch(`/api/feed?page=${page}`)
 
         if (res.status === 503) {
-          // Circuit breaker open on the backend — back off and retry once
-          // instead of treating this like an ordinary failure.
           const retryAfter = Number(res.headers.get("Retry-After")) || 5
           if (!cancelled) setServiceError(retryAfter)
         } else if (!res.ok) {
@@ -79,7 +70,6 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
           }
         }
       } catch {
-        // keep current state on error
       }
 
       if (!cancelled) {
@@ -92,9 +82,6 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
     return () => { cancelled = true }
   }, [activeTab, page, refreshKey, userId])
 
-  // Auto-retry once the backend's own Retry-After window has passed — bumping
-  // refreshKey re-runs the effect above for the same page, without resetting
-  // posts/hasMore the way a real "refresh" (handlePostCreated) would.
   useEffect(() => {
     if (serviceError == null) return
     const timer = setTimeout(() => setRefreshKey((k) => k + 1), serviceError * 1000)

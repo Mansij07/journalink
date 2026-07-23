@@ -37,7 +37,6 @@ export default async function ApplicationsPage({
 
   if (isProf) {
     const projectId = Number(projectParam)
-    // Scope to one project only when the param names a project this professor owns.
     if (projectParam && Number.isFinite(projectId)) {
       const { data: proj } = await supabase
         .from("project")
@@ -54,7 +53,6 @@ export default async function ApplicationsPage({
         )
       }
     }
-    // No/invalid/unowned param → all of this professor's applications.
     if (!scopedProjectTitle) {
       professorApplications = await getProfessorApplications(supabase, user.id)
     }
