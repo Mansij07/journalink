@@ -1,6 +1,7 @@
 "use client"
 
 import { FeedLayout } from "@/components/feed/FeedLayout"
+import type { Profile, FeedPost } from "@/lib/types"
 
 interface Suggestion {
   id: string
@@ -11,14 +12,14 @@ interface Suggestion {
 }
 
 interface FeedClientProps {
-  profile: any
+  profile: Profile | null
   userId: string
   followersCount: number
   followingCount: number
   projectsCount: number
   suggestions: Suggestion[]
   followsYouIds: string[]
-  initialPosts: any[]
+  initialPosts: FeedPost[]
   initialHasMore: boolean
 }
 

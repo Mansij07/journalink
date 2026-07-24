@@ -1,6 +1,7 @@
 import { FeedClient } from "@/components/feed-page"
 import { createClient } from "@/lib/supabase/server"
 import { getProfileById } from "@/lib/profile"
+import { fallbackProfile } from "@/lib/profileFallback"
 import { getFollowCounts, getProjectCount, getSuggestions } from "@/lib/social"
 import { getFeedPage } from "@/lib/posts"
 import { redirect } from "next/navigation"
@@ -31,7 +32,7 @@ export default async function FeedPage() {
 
   return (
     <FeedClient
-      profile={profile ?? { id: user.id, role: "Student" }}
+      profile={profile ?? fallbackProfile(user.id)}
       userId={user.id}
       followersCount={followers}
       followingCount={following}

@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import type { Profile } from "@/lib/types"
 
 interface LeftSidebarProps {
-  profile: any
+  profile: Profile | null
   followersCount: number
   followingCount: number
   projectsCount: number

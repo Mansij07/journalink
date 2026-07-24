@@ -79,3 +79,19 @@ export interface NotificationRow {
   read: boolean
   created_at: string
 }
+
+/** A feed/author-page post row, joined with its author's profile. */
+export interface FeedPost {
+  id: string
+  author_id: string
+  content: string
+  media?: { type: "image" | "video"; url: string }[] | null
+  image_url?: string | null
+  video_url?: string | null
+  scheduled_at?: string | null
+  created_at?: string | null
+  commentCount?: number
+  repostCount?: number
+  likeCount?: number
+  profiles?: Pick<Profile, "id" | "username" | "full_name" | "avatar_url" | "role"> | null
+}

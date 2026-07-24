@@ -15,9 +15,10 @@ import { renderWithMentions } from "@/lib/mentions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { FeedPost } from "@/lib/types"
 
 interface PostCardProps {
-  post: any
+  post: FeedPost
   userId?: string
   onPostClick?: (id: string) => void
   isFullView?: boolean

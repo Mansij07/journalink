@@ -5,9 +5,7 @@ import * as React from "react"
 import { PostCard } from "@/components/feed/PostCard"
 import { InfiniteScroll } from "@/components/feed/InfiniteScroll"
 import { FeedSkeleton } from "@/components/feed/FeedSkeleton"
-
-// Posts are loosely shaped throughout the UI (PostCard takes `post: any`).
-type Post = { id: string; [key: string]: unknown }
+import type { FeedPost } from "@/lib/types"
 
 /**
  * A professor's posts, loaded one page at a time as the viewer scrolls (via the
@@ -22,10 +20,10 @@ export function ProfilePosts({
 }: {
   authorId: string
   viewerId: string
-  initialPosts: Post[]
+  initialPosts: FeedPost[]
   initialHasMore: boolean
 }) {
-  const [posts, setPosts] = React.useState<Post[]>(initialPosts)
+  const [posts, setPosts] = React.useState<FeedPost[]>(initialPosts)
   const [page, setPage] = React.useState(0)
   const [hasMore, setHasMore] = React.useState(initialHasMore)
   const [loadingMore, setLoadingMore] = React.useState(false)
@@ -38,7 +36,7 @@ export function ProfilePosts({
       const res = await fetch(`/api/posts?author=${authorId}&page=${next}`)
       if (!res.ok) throw new Error("posts fetch failed")
       const { posts: more, hasMore: moreLeft } = await res.json()
-      setPosts((prev) => [...prev, ...(more as Post[])])
+      setPosts((prev) => [...prev, ...(more as FeedPost[])])
       setHasMore(Boolean(moreLeft))
       setPage(next)
     } catch {

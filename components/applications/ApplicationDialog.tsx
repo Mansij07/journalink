@@ -81,7 +81,7 @@ function ApplicationDialogBody({
   const router = useRouter()
   const [status, setStatus] = React.useState<ApplicationStatus>(application.status)
   const [decisionMessage, setDecisionMessage] = React.useState(application.decision_message)
-  const [leaveRequested, setLeaveRequested] = React.useState()
+  const [leaveRequested, setLeaveRequested] = React.useState(application.leave_requested)
   const [note, setNote] = React.useState("")
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)

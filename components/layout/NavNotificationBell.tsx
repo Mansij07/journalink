@@ -26,12 +26,13 @@ export function NavNotificationBell({ userId, active }: NavNotificationBellProps
 
   React.useEffect(() => {
     if (!userId) return
-    loadCount()
+    const initial = setTimeout(loadCount, 0)
     const timer = setInterval(loadCount, POLL_INTERVAL)
     const onFocus = () => loadCount()
     window.addEventListener("focus", onFocus)
 
     return () => {
+      clearTimeout(initial)
       clearInterval(timer)
       window.removeEventListener("focus", onFocus)
     }

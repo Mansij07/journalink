@@ -2,6 +2,7 @@ import "server-only"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { cacheGetOrSet, cacheDelete, cacheDeleteByPrefix } from "@/lib/redis"
+import type { FeedPost } from "@/lib/types"
 
 const FEED_BATCH_SIZE = 10
 const AUTHOR_BATCH_SIZE = 5
@@ -14,10 +15,8 @@ const authorPostsPageKey = (authorId: string, page: number, own: boolean) =>
   `posts:author:${authorId}:${own ? "own" : "page"}:${page}`
 const postKey = (id: string) => `post:${id}`
 
-type PostRow = { id: string; author_id: string; [key: string]: unknown }
-
 export interface FeedPage {
-  posts: PostRow[]
+  posts: FeedPost[]
   hasMore: boolean
 }
 
@@ -99,10 +98,10 @@ export async function getAuthorPostsPage(
 export async function getPostById(
   supabase: SupabaseClient,
   id: string
-): Promise<PostRow | null> {
+): Promise<FeedPost | null> {
   return cacheGetOrSet(postKey(id), POST_TTL, async () => {
     const { data } = await supabase.from("post").select("*").eq("id", id).maybeSingle()
-    return (data as PostRow | null) ?? null
+    return (data as FeedPost | null) ?? null
   })
 }
 

@@ -8,6 +8,7 @@ import { RightSidebar } from "./RightSidebar"
 import { FeedSkeleton } from "./FeedSkeleton"
 import { InfiniteScroll } from "./InfiniteScroll"
 import { FeedShell } from "./FeedShell"
+import type { Profile, FeedPost } from "@/lib/types"
 
 interface Suggestion {
   id: string
@@ -18,20 +19,20 @@ interface Suggestion {
 }
 
 interface FeedLayoutProps {
-  profile: any
+  profile: Profile | null
   userId: string
   followersCount: number
   followingCount: number
   projectsCount: number
   suggestions: Suggestion[]
   followsYouIds: string[]
-  initialPosts: any[]
+  initialPosts: FeedPost[]
   initialHasMore: boolean
 }
 
 export function FeedLayout({ profile, userId, followersCount, followingCount, projectsCount, suggestions, followsYouIds, initialPosts, initialHasMore }: FeedLayoutProps) {
   const activeTab = "all" as const
-  const [posts, setPosts] = useState<any[]>(initialPosts)
+  const [posts, setPosts] = useState<FeedPost[]>(initialPosts)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [loading, setLoading] = useState(false)
@@ -117,7 +118,7 @@ export function FeedLayout({ profile, userId, followersCount, followingCount, pr
         {role === "Prof" && (
           <PostComposer
             userId={userId}
-            username={profile?.username}
+            username={profile?.username ?? undefined}
             avatarUrl={profile?.avatar_url}
             onPostCreated={handlePostCreated}
           />

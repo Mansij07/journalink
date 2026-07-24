@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import { getProfileById } from "@/lib/profile"
+import { fallbackProfile } from "@/lib/profileFallback"
 import { getFollowCounts, getProjectCount, getSuggestions } from "@/lib/social"
 import { PostFullView } from "@/components/feed/PostFullView"
 import { FeedShell } from "@/components/feed/FeedShell"
@@ -32,7 +33,7 @@ export default async function PostPage({
     <FeedShell
       left={
         <LeftSidebar
-          profile={profile ?? { id: user.id, role: "Student" }}
+          profile={profile ?? fallbackProfile(user.id)}
           followersCount={followers}
           followingCount={following}
           projectsCount={projectsCount}
